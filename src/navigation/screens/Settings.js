@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function Settings() {
   const navigation = useNavigation(); // Hook để điều hướng
   const { height } = Dimensions.get("window");
+  const { theme, isDarkMode, toggleTheme } = useTheme();
 
   // Hàm logout
   const handleLogout = async () => {
@@ -66,51 +68,77 @@ export default function Settings() {
       style={styles.background}
       resizeMode="cover"
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+      >
         <View style={styles.container}>
-
           <View style={styles.profileContainer}>
             <Image source={require("../../../assets/default-avatar.png")} style={styles.avatar} />
-            <Text style={styles.name}>Minh Pham</Text>
-            <Text style={styles.userId}>ID: 21747</Text>
+            <Text style={[styles.name, { color: theme.text }]}>Minh Pham</Text>
+            <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: 21747</Text>
           </View>
 
-          {/* Options */}
           <View style={styles.optionsContainer}>
-            <TouchableOpacity style={styles.option}>
-              <FontAwesome name="user" size={24} color="black" />
+            <TouchableOpacity 
+              style={[styles.option, { backgroundColor: theme.card }]} 
+              onPress={() => navigation.navigate('Profile')}
+            >
+              <FontAwesome name="user" size={24} color={theme.text} />
               <View style={styles.textContainer}>
-                <Text style={styles.optionTitle}>Account center</Text>
-                <Text style={styles.optionSubtitle}>Password, security, personal information, options</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Account center</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>
+                  Password, security, personal information, options
+                </Text>
               </View>
+              <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.option}>
-              <FontAwesome name="globe" size={24} color="black" />
+            <TouchableOpacity 
+              style={[styles.option, { backgroundColor: theme.card }]} 
+              onPress={() => navigation.navigate('Language')}
+            >
+              <FontAwesome name="globe" size={24} color={theme.text} />
               <View style={styles.textContainer}>
-                <Text style={styles.optionTitle}>Language</Text>
-                <Text style={styles.optionSubtitle}>(Set the zone address)</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Language</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>
+                  (Set the zone address)
+                </Text>
               </View>
+              <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.option}>
-              <FontAwesome name="cog" size={24} color="black" />
+            <TouchableOpacity 
+              style={[styles.option, { backgroundColor: theme.card }]} 
+              onPress={toggleTheme}
+            >
+              <FontAwesome name={isDarkMode ? "moon-o" : "sun-o"} size={24} color={theme.text} />
               <View style={styles.textContainer}>
-                <Text style={styles.optionTitle}>Appearance Settings</Text>
-                <Text style={styles.optionSubtitle}>Dark mode/Light mode, font size</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Appearance Settings</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>
+                  {isDarkMode ? 'Dark mode enabled' : 'Light mode enabled'}
+                </Text>
               </View>
+              <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.option}>
-              <FontAwesome name="certificate" size={24} color="black" />
+            <TouchableOpacity 
+              style={[styles.option, { backgroundColor: theme.card }]} 
+              onPress={() => navigation.navigate('CertificateManagement')}
+            >
+              <FontAwesome name="certificate" size={24} color={theme.text} />
               <View style={styles.textContainer}>
-                <Text style={styles.optionTitle}>Certificate Management</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Certificate Management</Text>
               </View>
+              <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity 
+            style={[styles.logoutButton, { backgroundColor: theme.accent }]} 
+            onPress={handleLogout}
+          >
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -120,75 +148,70 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: 'transparent', 
-    padding: 20,
-  },
   background: {
     flex: 1,
-    width: "100%",
+    width: '100%',
   },
-  
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  container: { 
+    flex: 1,
+    padding: 20,
+    backgroundColor: 'transparent',
+  },
+  scrollContent: { 
+    flexGrow: 1,
+    paddingBottom: 20,
+    backgroundColor: 'transparent',
+  },
   profileContainer: { 
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 30,
+    backgroundColor: 'transparent',
   },
-
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
   name: { 
     fontSize: 22, 
-    fontWeight: 'bold', 
-    color: 'white',
+    fontWeight: 'bold',
     marginTop: 10,
   },
-
   userId: { 
-    fontSize: 16, 
-    color: '#ddd' 
+    fontSize: 16,
   },
-
-  scrollContent: { 
-    paddingBottom: 20,
-  },
-
   optionsContainer: { 
     padding: 10,
   },
-
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
   },
-
   textContainer: { 
     marginLeft: 10, 
     flex: 1 
   },
-
   optionTitle: { 
     fontSize: 16, 
-    fontWeight: 'bold', 
-    color: 'black' 
+    fontWeight: 'bold',
   },
-
   optionSubtitle: { 
-    fontSize: 12, 
-    color: '#555' 
+    fontSize: 12,
   },
-
   logoutButton: {
-    backgroundColor: '#e74c3c',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
   },
-
   logoutText: { 
     fontSize: 16, 
     fontWeight: 'bold', 

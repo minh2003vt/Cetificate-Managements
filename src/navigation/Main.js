@@ -11,6 +11,7 @@ import CourseDetail from "../../src/navigation/screens/CourseDetail"; // Import 
 import Settings from "../../src/navigation/screens/Settings";
 import Certificate from "../../src/navigation/screens/Certificate"; // Import màn hình Certificate
 import Schedule from "../../src/navigation/screens/Schedule"; // Import Schedule
+import Profile from "../../src/navigation/screens/Profile";
 
 const HomeTabs = 'Home';
 const NotificationsTabs = 'Notification';
@@ -76,6 +77,38 @@ function HomeStack() {
   );
 }
 
+function SettingsStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Settings"
+        component={Settings}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={Profile}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Language"
+        component={Settings} // Tạm thời dùng Settings, sau này thay bằng Language component
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AppearanceSettings"
+        component={Settings} // Tạm thời dùng Settings, sau này thay bằng AppearanceSettings component
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CertificateManagement"
+        component={Certificate}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function Main() {
   return (
     <Tab.Navigator
@@ -106,7 +139,7 @@ export default function Main() {
       <Tab.Screen name={NotificationsTabs} component={Notifications} />
       <Tab.Screen name={HistoryTabs} component={HistoryStack} />
       <Tab.Screen name={CourseTab} component={CoursesStack} />
-      <Tab.Screen name={SettingsTabs} component={Settings} />
+      <Tab.Screen name={SettingsTabs} component={SettingsStack} />
     </Tab.Navigator>
   );
 }

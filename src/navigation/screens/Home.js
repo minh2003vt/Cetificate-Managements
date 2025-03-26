@@ -55,7 +55,6 @@ const Home = () => {
           </View>
 
           {/* Các ô chức năng */}
-          // Inside your Home.js, update the grid item for Schedule
 <View style={styles.gridContainer}>
   {[
     { title: "Schedule", icon: "calendar", navigateTo: "Schedule" }, // Navigate to Schedule
