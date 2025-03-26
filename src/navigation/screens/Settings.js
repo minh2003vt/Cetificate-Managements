@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions, ImageBackground, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -9,6 +9,27 @@ export default function Settings() {
   const navigation = useNavigation(); // Hook để điều hướng
   const { height } = Dimensions.get("window");
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const [fullName, setFullName] = useState("");
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        const [name, id] = await Promise.all([
+          AsyncStorage.getItem("userFullName"),
+          AsyncStorage.getItem("userId")
+        ]);
+        setFullName(name || "User");
+        setUserId(id || "");
+      } catch (error) {
+        console.error("Error loading user info:", error);
+        setFullName("User");
+        setUserId("");
+      }
+    };
+    
+    loadUserInfo();
+  }, []);
 
   // Hàm logout
   const handleLogout = async () => {
@@ -76,8 +97,8 @@ export default function Settings() {
         <View style={styles.container}>
           <View style={styles.profileContainer}>
             <Image source={require("../../../assets/default-avatar.png")} style={styles.avatar} />
-            <Text style={[styles.name, { color: theme.text }]}>Minh Pham</Text>
-            <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: 21747</Text>
+            <Text style={[styles.name, { color: theme.text }]}>{fullName}</Text>
+            <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: {userId}</Text>
           </View>
 
           <View style={styles.optionsContainer}>

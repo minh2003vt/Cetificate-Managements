@@ -12,6 +12,7 @@ import {
   Modal,
   RefreshControl,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,12 +74,7 @@ const Notification = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to fetch notifications',
-        position: 'top',
-      });
+      setNotifications([]); // Đặt notifications thành mảng rỗng khi có lỗi
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -169,6 +165,16 @@ const Notification = ({ navigation }) => {
     }
   };
 
+  const NoNotificationsView = () => (
+    <View style={styles.noNotificationsContainer}>
+      <FontAwesome name="bell-slash" size={50} color="#B8C4D1" />
+      <Text style={styles.noNotificationsText}>No notifications found</Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+        <Text style={styles.refreshButtonText}>Refresh</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <ImageBackground
       source={require("../../../assets/Background-homepage.png")}
@@ -202,8 +208,17 @@ const Notification = ({ navigation }) => {
         {/* Notifications List */}
         <View style={[styles.listContainer, { width, height: height * 0.8, paddingTop: 20 }]}>
           {loading ? (
-            <Text style={styles.loadingText}>Loading...</Text>
-          ) : filteredNotifications.length > 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#1D72F3" />
+              <Text style={styles.loadingText}>Loading notifications...</Text>
+            </View>
+          ) : notifications.length === 0 ? (
+            <NoNotificationsView />
+          ) : searchText && filteredNotifications.length === 0 ? (
+            <Text style={styles.noResultText}>
+              No results found for "{searchText}"
+            </Text>
+          ) : (
             <FlatList
               data={filteredNotifications}
               keyExtractor={(item) => item.notificationId.toString()}
@@ -235,10 +250,6 @@ const Notification = ({ navigation }) => {
                 </TouchableOpacity>
               )}
             />
-          ) : (
-            <Text style={styles.noResultText}>
-              No results found for "{searchText}"
-            </Text>
           )}
         </View>
 
@@ -431,6 +442,35 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noNotificationsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  noNotificationsText: {
+    fontSize: 18,
+    color: "#B8C4D1",
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  refreshButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#1D72F3',
+    borderRadius: 8,
+  },
+  refreshButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -5,13 +5,27 @@ import {
   TouchableOpacity, StyleSheet, ImageBackground, ScrollView 
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Home = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState([]);
+  const [fullName, setFullName] = useState("");
 
   useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const name = await AsyncStorage.getItem("userFullName");
+        setFullName(name || "User");
+      } catch (error) {
+        console.error("Error loading user name:", error);
+        setFullName("User");
+      }
+    };
+    
+    loadUserName();
+    
     setNotifications([
       { id: "1", title: "New Course Incoming", date: "02/12/2025", content: "New course arrangements have been made for you: FIl..." },
       { id: "2", title: "New Certificate Received", date: "12/12/2024", content: "You've just gotten a new certificate: The Certificate of tra..." },
@@ -33,7 +47,7 @@ const Home = () => {
           <View style={styles.header}>
             <View>
               <Text style={styles.greeting}>Hello,</Text>
-              <Text style={styles.username}>Minh Pham</Text>
+              <Text style={styles.username}>{fullName}</Text>
             </View>
             <Image 
               source={require("../../../assets/default-avatar.png")}

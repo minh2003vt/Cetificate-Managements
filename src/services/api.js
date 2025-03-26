@@ -70,3 +70,39 @@ export const markAsRead = async (notificationId, token) => {
     throw error.response ? error.response.data : "Network error";
   }
 };
+
+// Get user profile
+export const getUserProfile = async (userId, token) => {
+  try {
+    const response = await api.get(`/User/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : "Network error";
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (userId, profileData, token) => {
+  try {
+    const requestBody = {
+      fullName: profileData.fullName,
+      gender: profileData.gender,
+      dateOfBirth: profileData.dateOfBirth + "T16:22:16.959Z", // Thêm thời gian để match format API
+      address: profileData.address,
+      phoneNumber: profileData.phoneNumber
+    };
+
+    const response = await api.put(`/User/${userId}/details`, requestBody, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : "Network error";
+  }
+};

@@ -13,6 +13,7 @@ import {
   Modal,
   SafeAreaView,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,18 +21,20 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import ImageZoom from 'react-native-image-pan-zoom';
 import { useTheme } from '../../context/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getUserProfile, updateUserProfile } from '../../services/api';
 
 const Profile = ({ navigation }) => {
   const { theme } = useTheme();
   const { width, height } = useWindowDimensions();
   const [profileData, setProfileData] = useState({
-    fullName: "Nguyễn Hoàng D",
+    fullName: "",
     gender: "Male",
-    dateOfBirth: "1992-12-10",
-    address: "TP.HCM",
-    email: "tranthib@example.com",
-    phoneNumber: "987654321",
-    personalID: "99210032100",
+    dateOfBirth: new Date().toISOString().split('T')[0],
+    address: "",
+    email: "",
+    phoneNumber: "",
+    personalID: "",
   });
 
   const [profileImage, setProfileImage] = useState(null);
@@ -39,9 +42,45 @@ const Profile = ({ navigation }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showFullPhone, setShowFullPhone] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Gender options
   const genderOptions = ["Male", "Female", "Other"];
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!userId || !token) {
+        Alert.alert('Error', 'User not authenticated');
+        navigation.navigate('Login');
+        return;
+      }
+
+      const userData = await getUserProfile(userId, token);
+      if (userData) {
+        setProfileData({
+          fullName: userData.fullName || "",
+          gender: userData.gender || "Male",
+          dateOfBirth: userData.dateOfBirth?.split('T')[0] || new Date().toISOString().split('T')[0],
+          address: userData.address || "",
+          email: userData.email || "",
+          phoneNumber: userData.phoneNumber || "",
+          personalID: userData.personalID || "",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      Alert.alert('Error', 'Failed to load user profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -71,9 +110,60 @@ const Profile = ({ navigation }) => {
     }
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert("Success", "Profile updated successfully!");
+  const handleSave = async () => {
+    try {
+      // Validation
+      if (!profileData.fullName.trim()) {
+        Alert.alert('Error', 'Full name is required');
+        return;
+      }
+
+      if (!profileData.gender) {
+        Alert.alert('Error', 'Gender is required');
+        return;
+      }
+
+      if (!profileData.dateOfBirth) {
+        Alert.alert('Error', 'Date of birth is required');
+        return;
+      }
+
+      if (!profileData.address.trim()) {
+        Alert.alert('Error', 'Address is required');
+        return;
+      }
+
+      if (!profileData.phoneNumber.trim()) {
+        Alert.alert('Error', 'Phone number is required');
+        return;
+      }
+
+      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!userId || !token) {
+        Alert.alert('Error', 'User not authenticated');
+        navigation.navigate('Login');
+        return;
+      }
+
+      setLoading(true);
+      await updateUserProfile(userId, profileData, token);
+      
+      // Cập nhật fullName trong AsyncStorage
+      await AsyncStorage.setItem("userFullName", profileData.fullName);
+      
+      setIsEditing(false);
+      Alert.alert("Success", "Profile updated successfully!");
+      
+      // Reload user profile to get updated data
+      await loadUserProfile();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -204,7 +294,15 @@ const Profile = ({ navigation }) => {
             <FontAwesome name={isEditing ? "check" : "edit"} size={24} color="white" />
           </TouchableOpacity>
         </View>
-        <View style={styles.profileImageContainer}>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+            <Text style={[styles.loadingText, { color: theme.text }]}>Loading profile...</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.profileImageContainer}>
               <TouchableOpacity onPress={() => setShowImageModal(true)}>
                 <Image
                   source={profileImage ? { uri: profileImage } : require('../../../assets/default-avatar.png')}
@@ -219,30 +317,31 @@ const Profile = ({ navigation }) => {
                 <Text style={[styles.changePhotoText, { color: 'white' }]}>Change Photo</Text>
               </TouchableOpacity>
             </View>
-        <ScrollView contentContainerStyle={[styles.contentContainer, { width, height: height * 0.8 }]}>
-          <View style={styles.card}>
 
+            <ScrollView contentContainerStyle={[styles.contentContainer]}>
+              <View style={styles.card}>
+                <View style={styles.infoContainer}>
+                  {renderField("Full Name", profileData.fullName, "fullName")}
+                  {renderField("Gender", profileData.gender, "gender")}
+                  {renderField("Date of Birth", profileData.dateOfBirth, "dateOfBirth")}
+                  {renderField("Address", profileData.address, "address")}
+                  {renderField("Email", profileData.email, "email")}
+                  {renderField("Phone Number", profileData.phoneNumber, "phoneNumber")}
+                  {renderField("Personal ID", profileData.personalID, "personalID")}
+                </View>
 
-            <View style={styles.infoContainer}>
-              {renderField("Full Name", profileData.fullName, "fullName")}
-              {renderField("Gender", profileData.gender, "gender")}
-              {renderField("Date of Birth", profileData.dateOfBirth, "dateOfBirth")}
-              {renderField("Address", profileData.address, "address")}
-              {renderField("Email", profileData.email, "email")}
-              {renderField("Phone Number", profileData.phoneNumber, "phoneNumber")}
-              {renderField("Personal ID", profileData.personalID, "personalID")}
-            </View>
-
-            {isEditing && (
-              <TouchableOpacity 
-                style={[styles.saveButton, { backgroundColor: theme.primary }]} 
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </ScrollView>
+                {isEditing && (
+                  <TouchableOpacity 
+                    style={[styles.saveButton, { backgroundColor: theme.primary }]} 
+                    onPress={handleSave}
+                  >
+                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </ScrollView>
+          </>
+        )}
 
         {/* Image Zoom Modal */}
         <Modal
@@ -355,12 +454,9 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   contentContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 20,
+    flexGrow: 1,
   },
   card: {
-    marginTop: 10,
     flex: 1,
     backgroundColor: 'white',
     borderTopLeftRadius: 50,
@@ -370,8 +466,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     padding: 20,
-    width: '100%',
-    alignSelf: 'center',
+    paddingBottom: 40,
+    minHeight: '100%',
   },
   profileImageContainer: {
     alignItems: 'center',
@@ -482,6 +578,15 @@ const styles = StyleSheet.create({
   },
   datePicker: {
     height: 260,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
   },
 });
 

@@ -1,46 +1,54 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage"; 
-import { loginUser } from "../../services/api";
+import { loginUser, getUserProfile } from "../../services/api";
 
 const Login = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const [UserName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!UserName.trim() || !password.trim()) {
-        return setErrorMessage("Please fill in all fields!");
+      return setErrorMessage("Please fill in all fields!");
     }
 
     try {
-      const data = await loginUser(UserName, password);
-      console.log("API Response:", data); // Debug API response
-  
-      if (data) {
-          // Save token if exists
-          if (data.token) {
-              await AsyncStorage.setItem("userToken", data.token);
-          }
-          if (data.userID) {
-              await AsyncStorage.setItem("userId", data.userID);
-          }
-          navigation.replace("Main");
+      setLoading(true);
+      const loginData = await loginUser(UserName, password);
+      console.log("Login Response:", loginData);
+
+      if (loginData) {
+        // Lưu token và userId
+        await AsyncStorage.setItem("userToken", loginData.token);
+        await AsyncStorage.setItem("userId", loginData.userID);
+
+        // Lấy thông tin user từ API
+        const userData = await getUserProfile(loginData.userID, loginData.token);
+        if (userData) {
+          // Lưu fullName vào storage
+          await AsyncStorage.setItem("userFullName", userData.fullName || "");
+        }
+
+        navigation.replace("Main");
       } else {
-          setErrorMessage("Login failed!");
+        setErrorMessage("Login failed!");
       }
     } catch (error) {
       console.error("Login Error:", error);
       if (typeof error === 'string') {
-          setErrorMessage(error);
+        setErrorMessage(error);
       } else if (error.message) {
-          setErrorMessage(error.message);
+        setErrorMessage(error.message);
       } else {
-          setErrorMessage("Something went wrong. Please try again!");
+        setErrorMessage("Something went wrong. Please try again!");
       }
+    } finally {
+      setLoading(false);
     }
-};
+  };
 
   return (
     <View style={styles.container}>
@@ -57,6 +65,7 @@ const Login = ({ navigation }) => {
         placeholderTextColor="#1D242E"
         value={UserName}
         onChangeText={setUserName}
+        editable={!loading}
       />
       <TextInput
         style={styles.input}
@@ -65,12 +74,22 @@ const Login = ({ navigation }) => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        editable={!loading}
       />
       
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-      <TouchableOpacity style={[styles.loginButton, { width: width * 0.7 }]} onPress={handleLogin}>
-        <Text style={[styles.loginButtonText, { fontSize: width * 0.05 }]}>Login</Text>
+      <TouchableOpacity 
+        style={[
+          styles.loginButton, 
+          { width: width * 0.7, opacity: loading ? 0.7 : 1 }
+        ]} 
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        <Text style={[styles.loginButtonText, { fontSize: width * 0.05 }]}>
+          {loading ? "Logging in..." : "Login"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity>
