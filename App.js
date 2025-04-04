@@ -4,6 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from './src/context/ThemeContext';
 import Main from './src/navigation/Main';
 import Login from './src/navigation/screens/Login';
+import ForgotPassword from './src/navigation/screens/ForgotPassword';
+import ResetPassword from './src/navigation/screens/ResetPassword';
 import Schedule from "./src/navigation/screens/Schedule";
 import { navigationRef } from "./src/utils/navigationService"; // Thêm dòng này
 
@@ -17,6 +19,16 @@ export default function App() {
           <Stack.Screen
             name="Login"
             component={Login}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPassword}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPassword}
             options={{ headerShown: false }}
           />
           <Stack.Screen

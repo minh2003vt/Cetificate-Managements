@@ -137,30 +137,30 @@ const Notification = ({ navigation }) => {
     const date = new Date(dateString);
     const now = new Date();
 
-    // Convert to local timezone and get time difference in minutes
+    // Tính khoảng cách thời gian theo phút, sử dụng thời gian địa phương
     const diffInMinutes = Math.floor((now - date) / (1000 * 60));
 
     if (diffInMinutes < 1) {
-      return 'Just now';
+      return 'Vừa xong';
     } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
+      return `${diffInMinutes} phút trước`;
     } else if (diffInMinutes < 24 * 60) {
       const hours = Math.floor(diffInMinutes / 60);
-      return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+      return `${hours} giờ trước`;
     } else if (diffInMinutes < 48 * 60) {
-      return `Yesterday at ${date.toLocaleTimeString('en-US', { 
+      return `Hôm qua lúc ${date.toLocaleTimeString('vi-VN', { 
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true 
+        hour12: false 
       })}`;
     } else {
-      return date.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
+      return date.toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: false
       });
     }
   };

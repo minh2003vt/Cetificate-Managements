@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Định nghĩa theme colors
 export const lightTheme = {
   text: '#000000',
+  textUpper: '#FFFFFF', 
   textSecondary: '#666666',
   primary: '#1D72F3',
   secondary: '#e0e0e0',
@@ -16,12 +17,14 @@ export const lightTheme = {
   error: '#f44336',
   warning: '#ff9800',
   info: '#2196F3',
-  inputBackground: 'rgba(255, 255, 255, 0.9)',
+  inputBackground: 'rgba(255, 255, 255, 0.95)',
   transparent: 'transparent',
+  contentInfo: '#FFFFFF',
 };
 
 export const darkTheme = {
   text: '#FFFFFF',
+  textUpper: '#000000',
   textSecondary: '#AAAAAA',
   primary: '#2196F3',
   secondary: '#333333',
@@ -36,6 +39,7 @@ export const darkTheme = {
   info: '#2196F3',
   inputBackground: 'rgba(30, 30, 30, 0.9)',
   transparent: 'transparent',
+  contentInfo:  'rgba(0, 0, 0, 0.9)',
 };
 
 export const ThemeContext = createContext({

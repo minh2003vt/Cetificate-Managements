@@ -25,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserProfile, updateUserProfile } from '../../services/api';
 
 const Profile = ({ navigation }) => {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
   const [profileData, setProfileData] = useState({
     fullName: "",
@@ -34,7 +34,13 @@ const Profile = ({ navigation }) => {
     address: "",
     email: "",
     phoneNumber: "",
-    personalID: "",
+  });
+
+  const [errors, setErrors] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    address: "",
   });
 
   const [profileImage, setProfileImage] = useState(null);
@@ -43,6 +49,7 @@ const Profile = ({ navigation }) => {
   const [showFullPhone, setShowFullPhone] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
 
   // Gender options
   const genderOptions = ["Male", "Female", "Other"];
@@ -53,30 +60,52 @@ const Profile = ({ navigation }) => {
 
   const loadUserProfile = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      const token = await AsyncStorage.getItem('userToken');
-      
-      if (!userId || !token) {
-        Alert.alert('Error', 'User not authenticated');
-        navigation.navigate('Login');
+      const userId = await AsyncStorage.getItem("userId");
+      const userToken = await AsyncStorage.getItem("userToken");
+
+      console.log('Loading profile with:', { userId, userToken });
+
+      if (!userId || !userToken) {
+        Alert.alert("Error", "Please login again");
+        navigation.navigate("Login");
         return;
       }
 
-      const userData = await getUserProfile(userId, token);
+      setLoading(true);
+      const userData = await getUserProfile(userId, userToken);
+      console.log("Profile Data:", userData);
+
       if (userData) {
-        setProfileData({
+        // Format date to YYYY-MM-DD
+        const dateOfBirth = userData.dateOfBirth 
+          ? new Date(userData.dateOfBirth).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+
+        const profileData = {
           fullName: userData.fullName || "",
-          gender: userData.gender || "Male",
-          dateOfBirth: userData.dateOfBirth?.split('T')[0] || new Date().toISOString().split('T')[0],
-          address: userData.address || "",
           email: userData.email || "",
           phoneNumber: userData.phoneNumber || "",
-          personalID: userData.personalID || "",
-        });
+          address: userData.address || "",
+          gender: userData.gender || "Male",
+          dateOfBirth: dateOfBirth,
+        };
+
+        console.log('Setting profile data:', profileData);
+        setProfileData(profileData);
+
+        // Update AsyncStorage with latest data
+        await AsyncStorage.setItem("userFullName", profileData.fullName);
+        await AsyncStorage.setItem("userEmail", profileData.email);
+        await AsyncStorage.setItem("userPhone", profileData.phoneNumber);
+        await AsyncStorage.setItem("userAddress", profileData.address);
+        await AsyncStorage.setItem("userGender", profileData.gender);
+        await AsyncStorage.setItem("userDateOfBirth", dateOfBirth);
+      } else {
+        Alert.alert("Error", "No profile data received");
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
-      Alert.alert('Error', 'Failed to load user profile');
+      console.error("Error loading profile:", error);
+      Alert.alert("Error", error.message || "Failed to load profile data");
     } finally {
       setLoading(false);
     }
@@ -110,57 +139,109 @@ const Profile = ({ navigation }) => {
     }
   };
 
+  const validateField = (key, value) => {
+    switch (key) {
+      case 'fullName':
+        if (!value || value.trim() === '') {
+          return 'Please enter your full name';
+        }
+        if (value.length > 50) {
+          return 'Full name cannot exceed 50 characters';
+        }
+        return '';
+
+      case 'email':
+        if (value && !/@/.test(value)) {
+          return 'Invalid email format, must contain @ character';
+        }
+        return '';
+
+      case 'phoneNumber':
+        if (value && !/^\d{10}$/.test(value)) {
+          return 'Phone number must be exactly 10 digits';
+        }
+        return '';
+
+      default:
+        return '';
+    }
+  };
+
+  const handleFieldChange = (key, value) => {
+    // Kiểm tra nếu là trường phoneNumber thì chỉ cho phép nhập số
+    if (key === 'phoneNumber') {
+      // Chỉ cho phép các ký tự số
+      if (!/^\d*$/.test(value)) {
+        return;
+      }
+    }
+
+    const newProfileData = {
+      ...profileData,
+      [key]: value
+    };
+    
+    setProfileData(newProfileData);
+
+    // Validate the changed field
+    const fieldError = validateField(key, value);
+    setErrors(prev => ({
+      ...prev,
+      [key]: fieldError
+    }));
+  };
+
   const handleSave = async () => {
     try {
-      // Validation
-      if (!profileData.fullName.trim()) {
-        Alert.alert('Error', 'Full name is required');
+      // Validate all fields
+      const fullNameError = validateField('fullName', profileData.fullName);
+      const emailError = validateField('email', profileData.email);
+      const phoneError = validateField('phoneNumber', profileData.phoneNumber);
+
+      const newErrors = {
+        fullName: fullNameError,
+        email: emailError,
+        phoneNumber: phoneError,
+      };
+
+      setErrors(newErrors);
+
+      if (fullNameError || emailError || phoneError) {
         return;
       }
 
-      if (!profileData.gender) {
-        Alert.alert('Error', 'Gender is required');
-        return;
-      }
-
-      if (!profileData.dateOfBirth) {
-        Alert.alert('Error', 'Date of birth is required');
-        return;
-      }
-
-      if (!profileData.address.trim()) {
-        Alert.alert('Error', 'Address is required');
-        return;
-      }
-
-      if (!profileData.phoneNumber.trim()) {
-        Alert.alert('Error', 'Phone number is required');
-        return;
-      }
-
-      const userId = await AsyncStorage.getItem('userId');
-      const token = await AsyncStorage.getItem('userToken');
-      
-      if (!userId || !token) {
-        Alert.alert('Error', 'User not authenticated');
-        navigation.navigate('Login');
+      // Validate dateOfBirth
+      const birthDate = new Date(profileData.dateOfBirth);
+      const now = new Date();
+      if (birthDate > now) {
+        setErrors(prev => ({
+          ...prev,
+          dateOfBirth: 'Date of birth cannot be in the future'
+        }));
         return;
       }
 
       setLoading(true);
-      await updateUserProfile(userId, profileData, token);
+
+      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem('userToken');
+
+      if (!userId || !token) {
+        Alert.alert('Error', 'Please login again');
+        navigation.navigate('Login');
+        return;
+      }
+
+      const response = await updateUserProfile(userId, profileData, token);
+      console.log('Update Profile Response:', response);
       
-      // Cập nhật fullName trong AsyncStorage
-      await AsyncStorage.setItem("userFullName", profileData.fullName);
-      
+      Alert.alert('Success', 'Profile updated successfully');
       setIsEditing(false);
-      Alert.alert("Success", "Profile updated successfully!");
-      
-      // Reload user profile to get updated data
+      // Reload profile data
       await loadUserProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
-      Alert.alert('Error', error.message || 'Failed to update profile');
+      Alert.alert('Error', error.message || 'An error occurred while updating profile');
     } finally {
       setLoading(false);
     }
@@ -189,25 +270,35 @@ const Profile = ({ navigation }) => {
         <View style={styles.fieldContainer}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
           {isEditing ? (
-            <View style={[styles.pickerContainer, { borderBottomColor: theme.border }]}>
-              <Picker
-                selectedValue={value}
-                onValueChange={(itemValue) =>
-                  setProfileData(prev => ({ ...prev, gender: itemValue }))
-                }
-                style={[styles.picker, { color: theme.text }]}
-                dropdownIconColor={theme.text}
+            <>
+              <TouchableOpacity 
+                style={[styles.dropdownButton, { borderBottomColor: theme.border, borderBottomWidth: 1 }]}
+                onPress={() => setShowGenderDropdown(!showGenderDropdown)}
               >
-                {genderOptions.map((option) => (
-                  <Picker.Item 
-                    key={option} 
-                    label={option} 
-                    value={option}
-                    color={theme.text}
-                  />
-                ))}
-              </Picker>
-            </View>
+                <Text style={[styles.dropdownButtonText, { color: theme.text }]}>
+                  {value || "Select Gender"}
+                </Text>
+              </TouchableOpacity>
+              
+              {showGenderDropdown && (
+                <View style={[styles.dropdownList, { backgroundColor: theme.contentInfo }]}>
+                  {genderOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.dropdownItem, { borderBottomColor: theme.border }]}
+                      onPress={() => {
+                        setProfileData(prev => ({ ...prev, gender: option }));
+                        setShowGenderDropdown(false);
+                      }}
+                    >
+                      <Text style={[styles.dropdownItemText, { color: theme.text }]}>
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </>
           ) : (
             <Text style={[styles.value, { color: theme.text }]}>{value}</Text>
           )}
@@ -220,13 +311,18 @@ const Profile = ({ navigation }) => {
         <View style={styles.fieldContainer}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
           {isEditing ? (
-            <TouchableOpacity 
-              style={[styles.dateSelector, { borderBottomColor: theme.border }]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Text style={[styles.value, { color: theme.text }]}>{value}</Text>
-              <FontAwesome name="calendar" size={16} color={theme.text} />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity 
+                style={[styles.dateSelector, { borderBottomColor: errors[key] ? 'red' : theme.border }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={[styles.value, { color: theme.text }]}>{value}</Text>
+                <FontAwesome name="calendar" size={16} color={theme.text} />
+              </TouchableOpacity>
+              {errors[key] ? (
+                <Text style={[styles.errorText, { color: 'red' }]}>{errors[key]}</Text>
+              ) : null}
+            </>
           ) : (
             <Text style={[styles.value, { color: theme.text }]}>{value}</Text>
           )}
@@ -239,17 +335,43 @@ const Profile = ({ navigation }) => {
         <View style={styles.fieldContainer}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
           <View style={styles.phoneContainer}>
-            <Text style={[styles.value, { color: theme.text }]}>{formatPhoneNumber(value)}</Text>
-            <TouchableOpacity 
-              style={styles.showPhoneButton}
-              onPress={() => setShowFullPhone(!showFullPhone)}
-            >
-              <FontAwesome 
-                name={showFullPhone ? "eye-slash" : "eye"} 
-                size={20} 
-                color={theme.text} 
-              />
-            </TouchableOpacity>
+            {isEditing ? (
+              <>
+                <TextInput
+                  style={[
+                    styles.input, 
+                    { 
+                      borderBottomColor: errors[key] ? 'red' : theme.border,
+                      color: theme.text,
+                      flex: 1,
+                    }
+                  ]}
+                  value={value}
+                  onChangeText={(text) => handleFieldChange(key, text)}
+                  keyboardType="numeric"
+                  maxLength={10}
+                  placeholder="Enter phone number"
+                  placeholderTextColor={theme.textSecondary}
+                />
+                {errors[key] ? (
+                  <Text style={[styles.errorText, { color: 'red' }]}>{errors[key]}</Text>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <Text style={[styles.value, { color: theme.text }]}>{formatPhoneNumber(value)}</Text>
+                <TouchableOpacity 
+                  style={styles.showPhoneButton}
+                  onPress={() => setShowFullPhone(!showFullPhone)}
+                >
+                  <FontAwesome 
+                    name={showFullPhone ? "eye-slash" : "eye"} 
+                    size={20} 
+                    color={theme.text} 
+                  />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       );
@@ -259,18 +381,23 @@ const Profile = ({ navigation }) => {
       <View style={styles.fieldContainer}>
         <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
         {isEditing ? (
-          <TextInput
-            style={[
-              styles.input, 
-              { 
-                borderBottomColor: theme.border,
-                color: theme.text,
-              }
-            ]}
-            value={value}
-            onChangeText={(text) => setProfileData(prev => ({...prev, [key]: text}))}
-            placeholderTextColor={theme.textSecondary}
-          />
+          <>
+            <TextInput
+              style={[
+                styles.input, 
+                { 
+                  borderBottomColor: errors[key] ? 'red' : theme.border,
+                  color: theme.text,
+                }
+              ]}
+              value={value}
+              onChangeText={(text) => handleFieldChange(key, text)}
+              placeholderTextColor={theme.textSecondary}
+            />
+            {errors[key] ? (
+              <Text style={[styles.errorText, { color: 'red' }]}>{errors[key]}</Text>
+            ) : null}
+          </>
         ) : (
           <Text style={[styles.value, { color: theme.text }]}>{value}</Text>
         )}
@@ -280,18 +407,19 @@ const Profile = ({ navigation }) => {
 
   return (
     <ImageBackground 
-      source={require("../../../assets/Background-homepage.png")}
+      source={  require("../../../assets/Background-homepage.png")
+      }
       style={styles.background}
       resizeMode="cover"
     >
       <SafeAreaView style={styles.container}>
         <View style={[styles.header, { backgroundColor: '#transparent' }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <FontAwesome name="arrow-left" size={24} color="white" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ color: theme.textUpper }}>
+            <FontAwesome name="arrow-left" size={24} style={{ color: theme.textUpper }}/>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
-            <FontAwesome name={isEditing ? "check" : "edit"} size={24} color="white" />
+          <Text style={[styles.headerTitle, { color: theme.textUpper }]}>Profile</Text>
+          <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={{ color: theme.textUpper }}>
+            <FontAwesome name={isEditing ? "check" : "edit"} size={24} style={{ color: theme.textUpper }} />
           </TouchableOpacity>
         </View>
 
@@ -319,7 +447,7 @@ const Profile = ({ navigation }) => {
             </View>
 
             <ScrollView contentContainerStyle={[styles.contentContainer]}>
-              <View style={styles.card}>
+              <View style={[styles.card, { backgroundColor: theme.contentInfo }]}>
                 <View style={styles.infoContainer}>
                   {renderField("Full Name", profileData.fullName, "fullName")}
                   {renderField("Gender", profileData.gender, "gender")}
@@ -327,7 +455,6 @@ const Profile = ({ navigation }) => {
                   {renderField("Address", profileData.address, "address")}
                   {renderField("Email", profileData.email, "email")}
                   {renderField("Phone Number", profileData.phoneNumber, "phoneNumber")}
-                  {renderField("Personal ID", profileData.personalID, "personalID")}
                 </View>
 
                 {isEditing && (
@@ -355,7 +482,7 @@ const Profile = ({ navigation }) => {
                 onPress={() => setShowImageModal(false)}
                 style={styles.closeButton}
               >
-                <FontAwesome name="close" size={24} color={theme.text} />
+                <FontAwesome name="close" size={24} color={"white"} />
               </TouchableOpacity>
             </View>
             <ImageZoom
@@ -458,7 +585,6 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: 'white',
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
     shadowColor: '#000',
@@ -587,6 +713,43 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
+  },
+  dropdownButton: {
+    width: "100%",
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    justifyContent: "center",
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+  },
+  dropdownList: {
+    position: "absolute",
+    top: 70,
+    left: 0,
+    right: 0,
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: 5,
+    color: 'red',
   },
 });
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { 
   View, Text, TextInput, FlatList, Image, 
-  TouchableOpacity, StyleSheet, ImageBackground, ScrollView 
+  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator 
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -11,26 +11,36 @@ const Home = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
   const [notifications, setNotifications] = useState([]);
-  const [fullName, setFullName] = useState("");
+  const [userFullName, setUserFullName] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUserName = async () => {
+    const loadUserData = async () => {
       try {
-        const name = await AsyncStorage.getItem("userFullName");
-        setFullName(name || "User");
+        const fullName = await AsyncStorage.getItem("userFullName");
+        setUserFullName(fullName || "");
       } catch (error) {
-        console.error("Error loading user name:", error);
-        setFullName("User");
+        console.error("Error loading user data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    loadUserName();
+
+    loadUserData();
     
     setNotifications([
       { id: "1", title: "New Course Incoming", date: "02/12/2025", content: "New course arrangements have been made for you: FIl..." },
       { id: "2", title: "New Certificate Received", date: "12/12/2024", content: "You've just gotten a new certificate: The Certificate of tra..." },
     ]);
   }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#1D72F3" />
+      </View>
+    );
+  }
 
   return (
     <ImageBackground 
@@ -47,7 +57,7 @@ const Home = () => {
           <View style={styles.header}>
             <View>
               <Text style={styles.greeting}>Hello,</Text>
-              <Text style={styles.username}>{fullName}</Text>
+              <Text style={styles.username}>{userFullName}</Text>
             </View>
             <Image 
               source={require("../../../assets/default-avatar.png")}

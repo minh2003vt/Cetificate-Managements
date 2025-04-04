@@ -1,23 +1,39 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage"; 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser, getUserProfile } from "../../services/api";
+import { FontAwesome } from '@expo/vector-icons';
 
 const Login = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
-  const [UserName, setUserName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   const handleLogin = async () => {
-    if (!UserName.trim() || !password.trim()) {
+    if (!username.trim() || !password.trim()) {
       return setErrorMessage("Please fill in all fields!");
     }
 
     try {
       setLoading(true);
-      const loginData = await loginUser(UserName, password);
+      const loginData = await loginUser(username, password);
       console.log("Login Response:", loginData);
 
       if (loginData) {
@@ -27,9 +43,16 @@ const Login = ({ navigation }) => {
 
         // Lấy thông tin user từ API
         const userData = await getUserProfile(loginData.userID, loginData.token);
+        console.log("User Profile Data:", userData);
+        
         if (userData) {
-          // Lưu fullName vào storage
+          // Lưu thông tin user vào storage
           await AsyncStorage.setItem("userFullName", userData.fullName || "");
+          await AsyncStorage.setItem("userEmail", userData.email || "");
+          await AsyncStorage.setItem("userPhone", userData.phoneNumber || "");
+          await AsyncStorage.setItem("userAddress", userData.address || "");
+          await AsyncStorage.setItem("userGender", userData.gender || "");
+          await AsyncStorage.setItem("userDateOfBirth", userData.dateOfBirth || "");
         }
 
         navigation.replace("Main");
@@ -51,51 +74,90 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../../assets/flightvault-logo.png")}
-        style={[styles.logo, { width: width * 0.7, height: height * 0.3 }]}
-        resizeMode="contain"
-      />
-      <Text style={[styles.title, { fontSize: width * 0.08 }]}>Login</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="User Name"
-        placeholderTextColor="#1D242E"
-        value={UserName}
-        onChangeText={setUserName}
-        editable={!loading}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#1D242E"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        editable={!loading}
-      />
-      
-      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-      <TouchableOpacity 
-        style={[
-          styles.loginButton, 
-          { width: width * 0.7, opacity: loading ? 0.7 : 1 }
-        ]} 
-        onPress={handleLogin}
-        disabled={loading}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.loginButtonText, { fontSize: width * 0.05 }]}>
-          {loading ? "Logging in..." : "Login"}
-        </Text>
-      </TouchableOpacity>
+        <View style={styles.formContainer}>
+          <Image
+            source={require("../../../assets/flightvault-logo.png")}
+            style={[styles.logo, { width: width * 0.7, height: height * 0.3 }]}
+            resizeMode="contain"
+          />
+          
+          <View style={styles.formContainer}>
+            <Text style={[styles.title, { fontSize: width * 0.08 }]}>Login</Text>
 
-      <TouchableOpacity>
-        <Text style={[styles.forgotPassword, { fontSize: width * 0.04 }]}>Forgot password?</Text>
-      </TouchableOpacity>
-    </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor="#1D242E"
+              value={username}
+              onChangeText={(text) => {
+                setUsername(text);
+                setErrorMessage("");
+              }}
+              editable={!loading}
+            />
+
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Password"
+                placeholderTextColor="#1D242E"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setErrorMessage("");
+                }}
+                secureTextEntry={!showPassword}
+                editable={!loading}
+                onFocus={() => setIsPasswordFocused(true)}
+                onBlur={() => setIsPasswordFocused(false)}
+              />
+              {isPasswordFocused && (
+                <TouchableOpacity 
+                  style={styles.showPasswordButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesome 
+                    name={showPassword ? "eye-slash" : "eye"} 
+                    size={20} 
+                    color="#1D242E" 
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {errorMessage ? (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.loginButton, { opacity: loading ? 0.7 : 1 }]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>
+                {loading ? "Logging in..." : "Login"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.forgotPasswordButton}
+              onPress={() => navigation.navigate("ForgotPassword")}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -103,24 +165,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#283342",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
   },
-  logo: {
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: "#1D72F3",
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 20,
+  formContainer: {
+    width: "100%",
     alignItems: "center",
   },
-  loginButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    textAlign: "center",
+  logo: {
+    marginBottom: 20,
   },
   title: {
     color: "#fff",
@@ -137,15 +194,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
   },
-  forgotPassword: {
-    color: "#ffff",
-    marginTop: 10,
-    textDecorationLine: "underline",
+  loginButton: {
+    backgroundColor: "#1D72F3",
+    width: "60%",
+    height: 45,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    alignSelf: "center",
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  forgotPasswordButton: {
+    marginTop: 15,
+    alignItems: "center",
+  },
+  forgotPasswordText: {
+    color: "#fff",
+    fontSize: 16,
   },
   errorText: {
     color: "red",
     fontSize: 16,
     marginBottom: 10,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
+  },
+  showPasswordButton: {
+    position: 'absolute',
+    right: 15,
+    padding: 10,
   },
 });
 

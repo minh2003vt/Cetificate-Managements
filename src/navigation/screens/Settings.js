@@ -97,7 +97,7 @@ export default function Settings() {
         <View style={styles.container}>
           <View style={styles.profileContainer}>
             <Image source={require("../../../assets/default-avatar.png")} style={styles.avatar} />
-            <Text style={[styles.name, { color: theme.text }]}>{fullName}</Text>
+            <Text style={[styles.name, { color: theme.textUpper }]}>{fullName}</Text>
             <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: {userId}</Text>
           </View>
 
@@ -118,13 +118,13 @@ export default function Settings() {
 
             <TouchableOpacity 
               style={[styles.option, { backgroundColor: theme.card }]} 
-              onPress={() => navigation.navigate('Language')}
+              onPress={() => navigation.navigate('ChangePassword')}
             >
-              <FontAwesome name="globe" size={24} color={theme.text} />
+              <FontAwesome name="lock" size={24} color={theme.text} />
               <View style={styles.textContainer}>
-                <Text style={[styles.optionTitle, { color: theme.text }]}>Language</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Change Password</Text>
                 <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>
-                  (Set the zone address)
+                  Update your account password
                 </Text>
               </View>
               <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
