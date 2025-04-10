@@ -40,8 +40,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "c47f6cf7-55b3-4c76-9bf3-f87e1ee54c0c"
       }
-    }
+    },
+    "owner": "mphamtran8"
   }
 }

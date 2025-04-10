@@ -8,24 +8,26 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUnreadCount } from '../services/api';
+import { EventRegister } from 'react-native-event-listeners';
 
 import Home from "../../src/navigation/screens/Home";
 import Notifications from "../../src/navigation/screens/Notifications";
 import History from "../../src/navigation/screens/History";
 import Courses from "../../src/navigation/screens/Courses";
-import CourseDetail from "../../src/navigation/screens/CourseDetail"; // Import CourseDetail
-import Settings from "../../src/navigation/screens/Settings";
-import Certificate from "../../src/navigation/screens/Certificate"; // Import màn hình Certificate
-import Schedule from "../../src/navigation/screens/Schedule"; // Import Schedule
+import CourseDetail from "../../src/navigation/screens/CourseDetail";
+import TrainingPlan from "../../src/navigation/screens/TrainingPlan"; // Import TrainingPlan
+import TrainingPlanDetail from "../../src/navigation/screens/TrainingPlanDetail"; // Import TrainingPlanDetail
+import Certificate from "../../src/navigation/screens/Certificate";
+import Schedule from "../../src/navigation/screens/Schedule";
 import Profile from "../../src/navigation/screens/Profile";
-import ChangePassword from "../../src/navigation/screens/ChangePassword";
 
 const HomeTabs = 'Home';
 const NotificationsTabs = 'Notification';
 const HistoryTabs = 'History';
 const CourseTab = 'Courses';
-const SettingsTabs = 'Setting';
-const ScheduleTab = 'Schedule'; // Add Schedule Tab
+const TrainingPlanTab = 'TrainingPlan'; // Add TrainingPlan Tab
+const ProfileTabs = 'Profile';
+const ScheduleTab = 'Schedule';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); // Create Stack Navigator
@@ -47,19 +49,24 @@ function HistoryStack() {
   );
 }
 
-// Stack Navigator for Courses and CourseDetail
-function CoursesStack() {
+// Stack Navigator for TrainingPlan, TrainingPlanDetail, and CourseDetail
+function TrainingPlanStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Courses"
-        component={Courses}
-        options={{ headerShown: false }} // Hide the header in Courses screen
+        name="TrainingPlan"
+        component={TrainingPlan}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TrainingPlanDetail"
+        component={TrainingPlanDetail}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CourseDetail"
         component={CourseDetail}
-        options={{ headerShown: false }} // Hide the header in CourseDetail screen
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -84,27 +91,12 @@ function HomeStack() {
   );
 }
 
-function SettingsStack() {
+function ProfileStack() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Settings"
-        component={Settings}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
         name="Profile"
         component={Profile}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ChangePassword"
-        component={ChangePassword} 
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="AppearanceSettings"
-        component={Settings} 
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -120,26 +112,54 @@ const Main = () => {
   const { theme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const loadUnreadCount = async () => {
-      try {
-        const userId = await AsyncStorage.getItem('userId');
-        const token = await AsyncStorage.getItem('userToken');
-        
-        if (userId && token) {
-          const response = await getUnreadCount(userId, token);
-          console.log('Unread count:', response);
-          setUnreadCount(response.unreadCount || 0);
-        }
-      } catch (error) {
-        console.error('Error loading unread count:', error);
+  const loadUnreadCount = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (userId && token) {
+        const response = await getUnreadCount(userId, token);
+        console.log('Unread count:', response);
+        setUnreadCount(response.unreadCount || 0);
       }
-    };
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  };
 
+  useEffect(() => {
+    // Khởi tạo số lượng thông báo khi component mount
     loadUnreadCount();
-    // Cập nhật số lượng thông báo mỗi 30 giây
-    const interval = setInterval(loadUnreadCount, 30000);
-    return () => clearInterval(interval);
+    
+    // Đăng ký các listeners cho các sự kiện khác nhau
+    const unreadCountListener = EventRegister.addEventListener(
+      'updateNotificationCount',
+      (data) => {
+        console.log('Received new unread count:', data);
+        setUnreadCount(data.unreadCount || 0);
+      }
+    );
+
+    const newNotificationListener = EventRegister.addEventListener(
+      'newNotification',
+      () => {
+        loadUnreadCount();
+      }
+    );
+
+    const notificationReadListener = EventRegister.addEventListener(
+      'notificationRead',
+      () => {
+        loadUnreadCount();
+      }
+    );
+
+    // Cleanup function
+    return () => {
+      EventRegister.removeEventListener(unreadCountListener);
+      EventRegister.removeEventListener(newNotificationListener);
+      EventRegister.removeEventListener(notificationReadListener);
+    };
   }, []);
 
   return (
@@ -198,10 +218,10 @@ const Main = () => {
         })}
       />
       <Tab.Screen
-        name="Course"
-        component={CoursesStack}
+        name="TrainingPlan"
+        component={TrainingPlanStack}
         options={({ route, navigation }) => ({
-          tabBarLabel: 'Course',
+          tabBarLabel: 'Training Plan',
           tabBarIcon: ({ focused }) => (
             <Image
               source={require('../../assets/Course.png')}
@@ -277,13 +297,13 @@ const Main = () => {
         })}
       />
       <Tab.Screen
-        name="Settings"
-        component={SettingsStack}
+        name="Profile"
+        component={ProfileStack}
         options={({ route, navigation }) => ({
-          tabBarLabel: 'Settings',
+          tabBarLabel: 'Profile',
           tabBarIcon: ({ focused }) => (
             <FontAwesome
-              name="gear"
+              name="user"
               size={24}
               color="#FFFFFF"
             />

@@ -37,9 +37,19 @@ const Login = ({ navigation }) => {
       console.log("Login Response:", loginData);
 
       if (loginData) {
+        // Kiểm tra role của người dùng từ mảng roles
+        const userRole = loginData.roles && loginData.roles.length > 0 ? loginData.roles[0] : loginData.role;
+        
+        if (!userRole || !["Instructor", "Trainee","Reviewer"].includes(userRole)) {
+          setErrorMessage("Unauthorized: Application only for Trainee,Instructor, or Reviewer!");
+          setLoading(false);
+          return;
+        }
+
         // Lưu token và userId
         await AsyncStorage.setItem("userToken", loginData.token);
         await AsyncStorage.setItem("userId", loginData.userID);
+        await AsyncStorage.setItem("userRole", userRole || "");
 
         // Lấy thông tin user từ API
         const userData = await getUserProfile(loginData.userID, loginData.token);
@@ -53,6 +63,11 @@ const Login = ({ navigation }) => {
           await AsyncStorage.setItem("userAddress", userData.address || "");
           await AsyncStorage.setItem("userGender", userData.gender || "");
           await AsyncStorage.setItem("userDateOfBirth", userData.dateOfBirth || "");
+          
+          // Lưu vai trò người dùng từ userData nếu có (ưu tiên hơn từ loginData)
+          if (userData.role) {
+            await AsyncStorage.setItem("userRole", userData.role);
+          }
         }
 
         navigation.replace("Main");

@@ -10,6 +10,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { getTrainingPlanUser, getSpecialty, getCourse } from '../../services/api';
 
 const Courses = ({ navigation }) => {
   const { width, height } = useWindowDimensions();

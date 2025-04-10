@@ -16,9 +16,10 @@ import {
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getNotifications, markAsRead } from '../../services/api';
+import { getNotifications, markAsRead, getUnreadCount } from '../../services/api';
 import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
+import { EventRegister } from 'react-native-event-listeners';
 
 const Notification = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
@@ -52,54 +53,60 @@ const Notification = ({ navigation }) => {
         throw new Error('User not authenticated');
       }
 
-      const response = await getNotifications(userId, token);
-      if (response.data) {
-        const sortedNotifications = response.data.sort((a, b) => 
+      const [notificationsResponse, unreadCountResponse] = await Promise.all([
+        getNotifications(userId, token),
+        getUnreadCount(userId, token)
+      ]);
+
+      if (notificationsResponse.data) {
+        const sortedNotifications = notificationsResponse.data.sort((a, b) => 
           new Date(b.createdAt) - new Date(a.createdAt)
         );
         
-        // Show toast for new notifications only if showToast is true and there are new notifications
-        if (showToast && sortedNotifications.length > 0 && !refreshing) {
+        // Kiểm tra xem có thông báo mới không
+        const hasNewNotification = sortedNotifications.length > 0 && 
+          (!lastFetchTime || new Date(sortedNotifications[0].createdAt) > lastFetchTime);
+
+        // Show toast và emit event nếu có thông báo mới
+        if (showToast && hasNewNotification) {
           const newestNotification = sortedNotifications[0];
-          const currentTime = new Date();
-          
-          // Check if this is a new notification since last fetch
-          if (!lastFetchTime || new Date(newestNotification.createdAt) > lastFetchTime) {
-            showNotificationToast(newestNotification.title, newestNotification.message);
-          }
+          showNotificationToast(newestNotification.title, newestNotification.message);
+          EventRegister.emit('newNotification');
         }
         
         setNotifications(sortedNotifications);
         setLastFetchTime(new Date());
+
+        // Emit event để cập nhật badge number
+        if (unreadCountResponse && unreadCountResponse.unreadCount !== undefined) {
+          EventRegister.emit('updateNotificationCount', unreadCountResponse);
+        }
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      setNotifications([]); // Đặt notifications thành mảng rỗng khi có lỗi
+      setNotifications([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Fetch on initial load
   useEffect(() => {
+    // Fetch initial notifications
     fetchNotifications();
+
+    // Cleanup function
+    return () => {
+      // Cleanup if needed
+    };
   }, []);
 
   // Fetch when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      // Don't show toast when returning to screen
       fetchNotifications(false);
-      
-      // Optional: Set up periodic refresh while screen is focused
-      const refreshInterval = setInterval(() => {
-        fetchNotifications(true);
-      }, 30000); // Refresh every 30 seconds
-
       return () => {
-        // Clean up interval when screen loses focus
-        clearInterval(refreshInterval);
+        // Cleanup if needed
       };
     }, [])
   );
@@ -111,10 +118,17 @@ const Notification = ({ navigation }) => {
 
   const handleNotificationPress = async (notification) => {
     try {
+      const userId = await AsyncStorage.getItem('userId');
       const token = await AsyncStorage.getItem('userToken');
+      
       if (!notification.isRead) {
-        await markAsRead(notification.notificationId, token);
-        // Update the local notifications list
+        // Thực hiện đồng thời các tác vụ
+        const [markReadResponse, unreadCountResponse] = await Promise.all([
+          markAsRead(notification.notificationId, token),
+          getUnreadCount(userId, token)
+        ]);
+
+        // Cập nhật trạng thái đã đọc trong danh sách thông báo
         setNotifications(prevNotifications => 
           prevNotifications.map(item => 
             item.notificationId === notification.notificationId 
@@ -122,10 +136,25 @@ const Notification = ({ navigation }) => {
               : item
           )
         );
+
+        // Emit events để cập nhật badge number và đánh dấu đã đọc
+        if (unreadCountResponse && unreadCountResponse.unreadCount !== undefined) {
+          EventRegister.emit('updateNotificationCount', unreadCountResponse);
+          EventRegister.emit('notificationRead');
+        }
       }
+
       setSelectedNotification(notification);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error in notification handling:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update notification status',
+        position: 'top',
+        visibilityTime: 3000,
+        autoHide: true,
+      });
     }
   };
 
@@ -285,6 +314,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    width: '100%',
   },
   header: {
     flexDirection: "row",

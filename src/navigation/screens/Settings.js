@@ -118,20 +118,6 @@ export default function Settings() {
 
             <TouchableOpacity 
               style={[styles.option, { backgroundColor: theme.card }]} 
-              onPress={() => navigation.navigate('ChangePassword')}
-            >
-              <FontAwesome name="lock" size={24} color={theme.text} />
-              <View style={styles.textContainer}>
-                <Text style={[styles.optionTitle, { color: theme.text }]}>Change Password</Text>
-                <Text style={[styles.optionSubtitle, { color: theme.textSecondary }]}>
-                  Update your account password
-                </Text>
-              </View>
-              <FontAwesome name="chevron-right" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.option, { backgroundColor: theme.card }]} 
               onPress={toggleTheme}
             >
               <FontAwesome name={isDarkMode ? "moon-o" : "sun-o"} size={24} color={theme.text} />
