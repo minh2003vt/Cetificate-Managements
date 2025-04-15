@@ -33,47 +33,60 @@ const Login = ({ navigation }) => {
 
     try {
       setLoading(true);
+      setErrorMessage("");
+      
       const loginData = await loginUser(username, password);
       console.log("Login Response:", loginData);
 
-      if (loginData) {
-        // Kiểm tra role của người dùng từ mảng roles
-        const userRole = loginData.roles && loginData.roles.length > 0 ? loginData.roles[0] : loginData.role;
-        
-        if (!userRole || !["Instructor", "Trainee","Reviewer"].includes(userRole)) {
-          setErrorMessage("Unauthorized: Application only for Trainee,Instructor, or Reviewer!");
-          setLoading(false);
-          return;
-        }
-
-        // Lưu token và userId
-        await AsyncStorage.setItem("userToken", loginData.token);
-        await AsyncStorage.setItem("userId", loginData.userID);
-        await AsyncStorage.setItem("userRole", userRole || "");
-
-        // Lấy thông tin user từ API
-        const userData = await getUserProfile(loginData.userID, loginData.token);
-        console.log("User Profile Data:", userData);
-        
-        if (userData) {
-          // Lưu thông tin user vào storage
-          await AsyncStorage.setItem("userFullName", userData.fullName || "");
-          await AsyncStorage.setItem("userEmail", userData.email || "");
-          await AsyncStorage.setItem("userPhone", userData.phoneNumber || "");
-          await AsyncStorage.setItem("userAddress", userData.address || "");
-          await AsyncStorage.setItem("userGender", userData.gender || "");
-          await AsyncStorage.setItem("userDateOfBirth", userData.dateOfBirth || "");
-          
-          // Lưu vai trò người dùng từ userData nếu có (ưu tiên hơn từ loginData)
-          if (userData.role) {
-            await AsyncStorage.setItem("userRole", userData.role);
-          }
-        }
-
-        navigation.replace("Main");
-      } else {
-        setErrorMessage("Login failed!");
+      // Kiểm tra xem loginData có phải là undefined, null hoặc không có token
+      if (!loginData || !loginData.token) {
+        setErrorMessage("Invalid username or password!");
+        setLoading(false);
+        return;
       }
+
+      // Kiểm tra role của người dùng từ mảng roles
+      const userRole = loginData.roles && loginData.roles.length > 0 ? loginData.roles[0] : loginData.role;
+      
+      if (!userRole || !["Instructor", "Trainee","Reviewer"].includes(userRole)) {
+        setErrorMessage("Unauthorized: Application only for Trainee,Instructor, or Reviewer!");
+        setLoading(false);
+        return;
+      }
+
+      // Lưu token và userId
+      await AsyncStorage.setItem("userToken", loginData.token);
+      await AsyncStorage.setItem("userId", loginData.userID);
+      await AsyncStorage.setItem("userRole", userRole || "");
+
+      // Lấy thông tin user từ API
+      const userData = await getUserProfile(loginData.userID, loginData.token);
+      console.log("User Profile Data:", userData);
+      
+      if (userData) {
+        // Lưu thông tin user vào storage
+        await AsyncStorage.setItem("userFullName", userData.fullName || "");
+        await AsyncStorage.setItem("userEmail", userData.email || "");
+        await AsyncStorage.setItem("userPhone", userData.phoneNumber || "");
+        await AsyncStorage.setItem("userAddress", userData.address || "");
+        await AsyncStorage.setItem("userGender", userData.gender || "");
+        await AsyncStorage.setItem("userDateOfBirth", userData.dateOfBirth || "");
+        
+        // Lưu avatar URL nếu có
+        if (userData.avatarUrlWithSas) {
+          console.log("Avatar URL found in profile after login:", userData.avatarUrlWithSas.substring(0, 50) + "...");
+          await AsyncStorage.setItem("userAvatar", userData.avatarUrlWithSas);
+        } else {
+          console.log("No avatar URL in profile after login");
+        }
+        
+        // Lưu vai trò người dùng từ userData nếu có (ưu tiên hơn từ loginData)
+        if (userData.role) {
+          await AsyncStorage.setItem("userRole", userData.role);
+        }
+      }
+
+      navigation.replace("Main");
     } catch (error) {
       console.error("Login Error:", error);
       if (typeof error === 'string') {

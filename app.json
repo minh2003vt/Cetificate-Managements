@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Certificate-Managements",
-    "slug": "Certificate-Managements",
+    "slug": "certificate-managements",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.certificatemanagements",
+      "bundleIdentifier": "com.minhprovt2003.certificatemanagements",
+      "buildNumber": "1",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
@@ -25,7 +26,14 @@
               "NSExceptionAllowsInsecureHTTPLoads": true
             }
           }
-        }
+        },
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ],
+        "NSCameraUsageDescription": "This app uses the camera to scan QR codes",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photos to upload profile pictures and certificates",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to find nearby training centers"
       }
     },
     "android": {
@@ -33,16 +41,35 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.certificatemanagements"
+      "package": "com.minhprovt2003.certificatemanagements",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "c47f6cf7-55b3-4c76-9bf3-f87e1ee54c0c"
       }
     },
-    "owner": "mphamtran8"
+    "owner": "minhprovt2003",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c47f6cf7-55b3-4c76-9bf3-f87e1ee54c0c"
+    }
   }
 }

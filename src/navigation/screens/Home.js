@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { 
   View, Text, TextInput, FlatList, Image, 
-  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator 
+  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator, useWindowDimensions 
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getNotifications, getUnreadCount } from "../../services/api";
+import { EventRegister } from "react-native-event-listeners";
 
 const Home = () => {
   const navigation = useNavigation();
@@ -14,30 +15,80 @@ const Home = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userFullName, setUserFullName] = useState("");
+  const [userAvatar, setUserAvatar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
+  const { height } = useWindowDimensions();
+
+  const loadUserData = async () => {
+    try {
+      const fullName = await AsyncStorage.getItem("userFullName");
+      const userID = await AsyncStorage.getItem("userId");
+      const avatarUrl = await AsyncStorage.getItem("userAvatar");
+      
+      console.log("Loading Home data - Avatar URL:", avatarUrl ? `Found (${avatarUrl.substring(0, 30)}...)` : "Not found");
+      
+      setUserFullName(fullName || "");
+      setUserId(userID || "");
+      if (avatarUrl) {
+        setUserAvatar(avatarUrl);
+      }
+      
+      // Sau khi lấy được userId, gọi fetchNotifications
+      if (userID) {
+        fetchNotifications(userID);
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const fullName = await AsyncStorage.getItem("userFullName");
-        const userID = await AsyncStorage.getItem("userId");
-        setUserFullName(fullName || "");
-        setUserId(userID || "");
-        
-        // Sau khi lấy được userId, gọi fetchNotifications
-        if (userID) {
-          fetchNotifications(userID);
-        }
-      } catch (error) {
-        console.error("Error loading user data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadUserData();
-  }, []);
+
+    // Đăng ký listeners cho các sự kiện thông báo
+    const notificationReadListener = EventRegister.addEventListener(
+      'notificationRead',
+      () => {
+        // Khi có thông báo được đọc, cập nhật lại danh sách thông báo
+        if (userId) {
+          fetchNotifications(userId);
+        }
+      }
+    );
+
+    const updateNotificationCountListener = EventRegister.addEventListener(
+      'updateNotificationCount',
+      (data) => {
+        console.log('Home received updateNotificationCount:', data);
+        // Cập nhật số lượng thông báo chưa đọc
+        setUnreadCount(data.unreadCount || 0);
+        // Tải lại thông báo nếu cần
+        if (userId) {
+          fetchNotifications(userId);
+        }
+      }
+    );
+
+    const newNotificationListener = EventRegister.addEventListener(
+      'newNotification',
+      () => {
+        // Khi có thông báo mới, cập nhật lại danh sách
+        if (userId) {
+          fetchNotifications(userId);
+        }
+      }
+    );
+
+    // Cleanup function
+    return () => {
+      EventRegister.removeEventListener(notificationReadListener);
+      EventRegister.removeEventListener(updateNotificationCountListener);
+      EventRegister.removeEventListener(newNotificationListener);
+    };
+  }, [userId]); // Thêm userId vào dependency array
   
   const fetchNotifications = async (userID) => {
     try {
@@ -49,7 +100,10 @@ const Home = () => {
       
       // Lấy số thông báo chưa đọc
       const unreadResponse = await getUnreadCount(userID, token);
-      const unreadTotal = unreadResponse?.unreadTotal || 0;
+      const unreadTotal = unreadResponse?.unreadCount || 0;
+      
+      // Cập nhật state với số thông báo chưa đọc mới
+      console.log("Fetched unread count:", unreadTotal);
       setUnreadCount(unreadTotal);
       
       // Lấy tất cả thông báo
@@ -61,19 +115,19 @@ const Home = () => {
           new Date(b.createdAt) - new Date(a.createdAt)
         );
         
-        // Ưu tiên hiển thị thông báo chưa đọc
+        // Tách thông báo thành đã đọc và chưa đọc
         const unreadNotifications = sortedNotifications.filter(note => !note.isRead);
+        const readNotifications = sortedNotifications.filter(note => note.isRead);
         
-        // Lấy 2 thông báo mới nhất (ưu tiên chưa đọc)
+        // Chọn thông báo hiển thị theo quy tắc mới
         let notificationsToShow = [];
         
         if (unreadNotifications.length >= 2) {
-          // Nếu có ít nhất 2 thông báo chưa đọc, hiển thị 2 thông báo đó
+          // Nếu có từ 2 thông báo chưa đọc trở lên, hiển thị 2 thông báo chưa đọc mới nhất
           notificationsToShow = unreadNotifications.slice(0, 2);
         } else if (unreadNotifications.length === 1) {
           // Nếu chỉ có 1 thông báo chưa đọc, hiển thị nó và 1 thông báo đã đọc mới nhất
-          const readNotifications = sortedNotifications.filter(note => note.isRead);
-          notificationsToShow = [unreadNotifications[0]];
+          notificationsToShow.push(unreadNotifications[0]);
           if (readNotifications.length > 0) {
             notificationsToShow.push(readNotifications[0]);
           }
@@ -85,9 +139,9 @@ const Home = () => {
         // Format thông báo để hiển thị
         const formattedNotifications = notificationsToShow.map(note => {
           // Lấy 50 ký tự đầu tiên của nội dung và thêm dấu "..." nếu dài hơn
-          const shortenedMessage = note.message.length > 50
+          const shortenedMessage = note.message && note.message.length > 50
             ? note.message.substring(0, 50) + "..."
-            : note.message;
+            : note.message || '';
             
           // Format date
           const date = new Date(note.createdAt);
@@ -103,12 +157,25 @@ const Home = () => {
           };
         });
         
+        // Cập nhật state
+        console.log("Setting notifications:", formattedNotifications.length, "items");
         setNotifications(formattedNotifications);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
   };
+
+  // Thêm useFocusEffect để tải lại dữ liệu khi màn hình được focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Tải lại dữ liệu người dùng (bao gồm avatar) khi màn hình được focus
+      loadUserData();
+      return () => {
+        // Cleanup nếu cần
+      };
+    }, [])
+  );
 
   if (loading) {
     return (
@@ -135,10 +202,12 @@ const Home = () => {
               <Text style={styles.greeting}>Hello,</Text>
               <Text style={styles.username}>{userFullName}</Text>
             </View>
-            <Image 
-              source={require("../../../assets/default-avatar.png")}
-              style={styles.avatar} 
-            />
+            <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+              <Image 
+                source={userAvatar ? { uri: userAvatar } : require("../../../assets/default-avatar.png")}
+                style={styles.avatar} 
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Thanh tìm kiếm */}
@@ -191,24 +260,32 @@ const Home = () => {
           </View>
 
           {notifications.length > 0 ? (
-            <FlatList
-              data={notifications}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.notificationCard,
-                    !item.isRead && styles.unreadNotification
-                  ]}
-                  onPress={() => navigation.navigate("Notifications")}
-                >
-                  {!item.isRead && <View style={styles.unreadDot} />}
-                  <Text style={styles.notificationCardTitle}>{item.title}</Text>
-                  <Text style={styles.notificationDate}>{item.date}</Text>
-                  <Text style={styles.notificationContent}>{item.content}</Text>
-                </TouchableOpacity>
-              )}
-            />
+            <View style={{maxHeight: height * 0.28}}>
+              <FlatList
+                data={notifications}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.notificationCard,
+                      !item.isRead && styles.unreadNotification
+                    ]}
+                    onPress={() => navigation.navigate("Notifications")}
+                  >
+                    <View style={styles.cardContent}>
+                      <View style={styles.titleContainer}>
+                        <Text style={styles.notificationCardTitle} numberOfLines={1} ellipsizeMode="tail">
+                          {item.title}
+                        </Text>
+                        {!item.isRead && <View style={styles.unreadDot} />}
+                      </View>
+                      <Text style={styles.notificationDate}>{item.date}</Text>
+                      <Text style={styles.notificationContent} numberOfLines={2} ellipsizeMode="tail">{item.content}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
           ) : (
             <View style={styles.emptyNotifications}>
               <Text style={styles.emptyText}>No notifications yet</Text>
@@ -311,29 +388,51 @@ const styles = StyleSheet.create({
   // Danh sách thông báo
   notificationCard: { 
     backgroundColor: "#43546A", 
-    borderWidth: 2,
-    borderColor: "black",
     borderRadius: 10, 
     padding: 15, 
     marginBottom: 10,
     position: 'relative',
+    borderWidth: 2,
+    borderColor: "black",
   },
   unreadNotification: {
     borderLeftWidth: 4,
     borderLeftColor: '#1D72F3',
   },
   unreadDot: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#FF4444',
+    marginLeft: 5,
   },
-  notificationCardTitle: { fontSize: 16, fontWeight: "bold", color: "white" },
-  notificationDate: { fontSize: 12, color: "#DDD", marginBottom: 5 },
-  notificationContent: { fontSize: 14, color: "#EEE" },
+  cardContent: {
+    flex: 1,
+    width: '100%',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    width: '100%',
+  },
+  notificationCardTitle: { 
+    fontSize: 16, 
+    fontWeight: "bold", 
+    color: "white",
+    flex: 1,
+    marginRight: 10,
+  },
+  notificationDate: { 
+    fontSize: 12, 
+    color: "#DDD", 
+    marginBottom: 5 
+  },
+  notificationContent: { 
+    fontSize: 14, 
+    color: "#EEE" 
+  },
   emptyNotifications: {
     backgroundColor: "#43546A",
     borderWidth: 2,

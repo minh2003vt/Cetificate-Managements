@@ -22,7 +22,7 @@ import { Picker } from '@react-native-picker/picker';
 import ImageZoom from 'react-native-image-pan-zoom';
 import { useTheme } from '../../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfile, updateUserProfile, changePassword } from '../../services/api';
+import { getUserProfile, updateUserProfile, changePassword, updateUserAvatar, getUserAvatar } from '../../services/api';
 
 const Profile = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
@@ -95,6 +95,8 @@ const Profile = ({ navigation }) => {
       }
 
       setLoading(true);
+      
+      // Tải thông tin hồ sơ
       const userData = await getUserProfile(userId, userToken);
       console.log("Profile Data:", userData);
 
@@ -123,6 +125,15 @@ const Profile = ({ navigation }) => {
         await AsyncStorage.setItem("userAddress", profileData.address);
         await AsyncStorage.setItem("userGender", profileData.gender);
         await AsyncStorage.setItem("userDateOfBirth", dateOfBirth);
+        
+        // Lấy và lưu trữ URL avatar
+        if (userData.avatarUrlWithSas) {
+          console.log("Avatar URL found in profile");
+          setProfileImage(userData.avatarUrlWithSas);
+          await AsyncStorage.setItem("userAvatar", userData.avatarUrlWithSas);
+        } else {
+          console.log("No avatar URL in profile");
+        }
       } else {
         Alert.alert("Error", "No profile data received");
       }
@@ -149,16 +160,41 @@ const Profile = ({ navigation }) => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 1,
+        quality: 0.8,
       });
 
       if (!result.canceled) {
         const selectedAsset = result.assets[0];
-        setProfileImage(selectedAsset.uri);
+        setLoading(true);
+        
+        // Lấy userId và token để gọi API
+        const userId = await AsyncStorage.getItem("userId");
+        const token = await AsyncStorage.getItem("userToken");
+        
+        if (!userId || !token) {
+          Alert.alert("Lỗi", "Bạn cần đăng nhập lại");
+          navigation.navigate("Login");
+          return;
+        }
+        
+        try {
+          // Tải ảnh lên server
+          await updateUserAvatar(userId, selectedAsset.uri, token);
+          
+          // Làm mới thông tin profile để lấy URL avatar mới
+          await loadUserProfile();
+          
+          // Hiển thị thông báo thành công
+          Alert.alert("Thành công", "Ảnh đại diện đã được cập nhật");
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          Alert.alert("Lỗi", "Không thể cập nhật ảnh đại diện. Vui lòng thử lại.");
+          setLoading(false);
+        }
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      Alert.alert('Lỗi', 'Không thể chọn ảnh. Vui lòng thử lại.');
     }
   };
 

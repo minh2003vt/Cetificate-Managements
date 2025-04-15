@@ -139,6 +139,7 @@ const Notification = ({ navigation }) => {
 
         // Emit events để cập nhật badge number và đánh dấu đã đọc
         if (unreadCountResponse && unreadCountResponse.unreadCount !== undefined) {
+          console.log('Emitting updateNotificationCount with:', unreadCountResponse);
           EventRegister.emit('updateNotificationCount', unreadCountResponse);
           EventRegister.emit('notificationRead');
         }

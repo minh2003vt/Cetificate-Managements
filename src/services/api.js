@@ -2,7 +2,7 @@ import axios from "axios";
 import { navigate } from "../utils/navigationService"; // Import hàm điều hướng nếu có
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_BASE_URL = "https://ocms-vjvn.azurewebsites.net/api";
+const API_BASE_URL = "https://ocms-bea4aagveeejawff.southeastasia-01.azurewebsites.net/api/";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -32,11 +32,19 @@ api.interceptors.response.use(
 export const loginUser = async (UserName, password) => {
   try {
     console.log('Login Request:', { username: UserName, password: password });
+    
     const response = await api.post("/Login/login", {
       username: UserName,
       password: password,
     });
+    
     console.log('Login Response:', response.data);
+    
+    // Kiểm tra xem phản hồi có thành công và có token không
+    if (!response.data || !response.data.token) {
+      console.log('Login failed: No valid token in response');
+      return null; // Trả về null để component Login biết đăng nhập thất bại
+    }
     
     // Đảm bảo trả về đối tượng với thông tin người dùng và vai trò
     // Nếu API không trả về role, kiểm tra xem có thể lấy từ các thuộc tính khác không
@@ -52,7 +60,19 @@ export const loginUser = async (UserName, password) => {
     return responseData;
   } catch (error) {
     console.log('Login Error:', error.response?.data || error.message);
-    throw error.response ? error.response.data : "Network error";
+    
+    // Kiểm tra phản hồi lỗi cụ thể từ server
+    if (error.response && error.response.data) {
+      if (typeof error.response.data === 'string') {
+        throw error.response.data;
+      } else if (error.response.data.message) {
+        throw error.response.data.message;
+      } else {
+        throw "Invalid username or password";
+      }
+    }
+    
+    throw "Network error. Please check your connection and try again.";
   }
 };
 
@@ -88,11 +108,11 @@ export const markAsRead = async (notificationId, token) => {
 export const getUserProfile = async (userId, token) => {
   try {
     console.log('Get Profile Request:', {
-      url: `/User/${userId}`,
+      url: `/User/profile`,
       token: token
     });
 
-    const response = await api.get(`/User/${userId}`, {
+    const response = await api.get(`/User/profile`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -105,12 +125,13 @@ export const getUserProfile = async (userId, token) => {
     
     return {
       fullName: userData.fullName || "",
-      email: userData.email || "",  // API returns userName for email
+      email: userData.email || "",
       phoneNumber: userData.phoneNumber || "",
       address: userData.address || "",
       gender: userData.gender || "Male",
       dateOfBirth: userData.dateOfBirth || new Date().toISOString(),
-      role: userData.role || response.data?.role || ""  // Lấy thông tin vai trò
+      role: userData.roleName || "",
+      avatarUrlWithSas: userData.avatarUrlWithSas || null
     };
   } catch (error) {
     console.error('Get Profile Error:', error.response?.data || error.message);
@@ -470,5 +491,63 @@ export const getUserById = async (userId, token) => {
     console.error('Error fetching user:', error);
     // Return a default object instead of throwing to prevent UI errors
     return { fullName: 'N/A' };
+  }
+};
+
+// Upload user avatar
+export const updateUserAvatar = async (userId, imageUri, token) => {
+  try {
+    console.log('Uploading avatar for user:', userId);
+    
+    // Create form data to send the image
+    const formData = new FormData();
+    
+    // Get file name and extension from the URI
+    const uriParts = imageUri.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+    
+    // Add file to form data
+    formData.append('file', {
+      uri: imageUri,
+      name: `avatar-${userId}.${fileType}`,
+      type: `image/${fileType}`,
+    });
+    
+    console.log('Avatar form data prepared:', formData);
+    
+    // Send multipart/form-data request
+    const response = await axios.put(`${API_BASE_URL}/User/avatar`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    console.log('Avatar upload response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading avatar:', error.response?.data || error.message);
+    throw error.response ? error.response.data : "Network error";
+  }
+};
+
+// Get user avatar
+export const getUserAvatar = async (userId, token) => {
+  try {
+    console.log('Fetching avatar for user:', userId);
+    
+    // Lấy profile người dùng đã bao gồm avatarUrlWithSas
+    const userProfile = await getUserProfile(userId, token);
+    
+    if (userProfile && userProfile.avatarUrlWithSas) {
+      console.log('Avatar fetch successful:', userProfile.avatarUrlWithSas.substring(0, 50) + '...');
+      return userProfile.avatarUrlWithSas;
+    }
+    
+    console.log('No avatar URL found in profile');
+    return null;
+  } catch (error) {
+    console.error('Error fetching avatar:', error.message || error);
+    return null; // Trả về null thay vì ném lỗi để tránh crash UI
   }
 };
