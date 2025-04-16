@@ -14,9 +14,9 @@ import {
   Keyboard
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUser, getUserProfile } from "../../services/api";
+import { loginUser, getUserProfile } from "../../../services/api";
 import { FontAwesome } from '@expo/vector-icons';
-
+import { BACKGROUND_HOMEPAGE,FLIGHT_VAULT_LOGO } from "../../../utils/assets";
 const Login = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const [username, setUsername] = useState("");
@@ -113,7 +113,7 @@ const Login = ({ navigation }) => {
       >
         <View style={styles.formContainer}>
           <Image
-            source={require("../../../assets/flightvault-logo.png")}
+            source={FLIGHT_VAULT_LOGO}
             style={[styles.logo, { width: width * 0.7, height: height * 0.3 }]}
             resizeMode="contain"
           />

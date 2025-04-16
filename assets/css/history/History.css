@@ -1,0 +1,147 @@
+/* History.css */
+.container {
+  flex: 1;
+  padding: 10px;
+}
+
+.background {
+  flex: 1;
+  width: 100%;
+}
+
+.header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.certificateCard {
+  background-color: #ffffff;
+  border-radius: 10px;
+  margin-vertical: 8px;
+  padding: 15px;
+  elevation: 2;
+  shadow-color: #000;
+  shadow-offset: 0 2px;
+  shadow-opacity: 0.1;
+  shadow-radius: 3.84px;
+}
+
+.cardHeader {
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom-width: 1px;
+  border-bottom-color: #e5e5e5;
+}
+
+.courseInfo {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.courseName {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.issueDate {
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.viewButton {
+  background-color: #1D72F3;
+  border-radius: 5px;
+  padding: 8px 15px;
+  margin-top: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  align-self: flex-end;
+}
+
+.viewButtonText {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  margin-left: 5px;
+}
+
+.noContentContainer {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.noContentText {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.loadingContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.errorContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.errorText {
+  text-align: center;
+  color: #FF6B6B;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.retryButton {
+  background-color: #1D72F3;
+  padding-horizontal: 20px;
+  padding-vertical: 10px;
+  border-radius: 5px;
+}
+
+.retryButtonText {
+  color: #FFF;
+  font-weight: bold;
+}
+
+.icon {
+  margin-right: 5px;
+}
+
+.certificateImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+}
+
+.cardContent {
+  margin-top: 10px;
+}
+
+.cardFooter {
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 10px;
+} 

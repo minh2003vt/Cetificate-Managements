@@ -20,10 +20,10 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import ImageZoom from 'react-native-image-pan-zoom';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getUserProfile, updateUserProfile, changePassword, updateUserAvatar, getUserAvatar } from '../../services/api';
-
+import { getUserProfile, updateUserProfile, changePassword, updateUserAvatar, getUserAvatar } from '../../../services/api';
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK,DEFAULT_AVATAR} from '../../../utils/assets';
 const Profile = ({ navigation }) => {
   const { theme, isDarkMode } = useTheme();
   const { width, height } = useWindowDimensions();
@@ -294,8 +294,8 @@ const Profile = ({ navigation }) => {
       const response = await updateUserProfile(userId, profileData, token);
       console.log('Update Profile Response:', response);
       
-      Alert.alert('Success', 'Profile updated successfully');
-    setIsEditing(false);
+      Alert.alert('Success', response.message || 'Profile updated successfully');
+      setIsEditing(false);
       // Reload profile data
       await loadUserProfile();
     } catch (error) {
@@ -552,7 +552,7 @@ const Profile = ({ navigation }) => {
       }, token);
       
       console.log('Password update response:', response);
-      Alert.alert('Success', 'Password changed successfully');
+      Alert.alert('Success', response.message || 'Password changed successfully');
       
       // Reset form
       setPasswordData({
@@ -660,8 +660,7 @@ const Profile = ({ navigation }) => {
 
   return (
     <ImageBackground 
-      source={  require("../../../assets/Background-homepage.png")
-      }
+      source={BACKGROUND_HOMEPAGE}
       style={styles.background}
       resizeMode="cover"
     >
@@ -684,7 +683,7 @@ const Profile = ({ navigation }) => {
         <View style={styles.profileImageContainer}>
           <TouchableOpacity onPress={() => setShowImageModal(true)}>
             <Image
-              source={profileImage ? { uri: profileImage } : require('../../../assets/default-avatar.png')}
+              source={profileImage ? { uri: profileImage } : DEFAULT_AVATAR}
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -806,7 +805,7 @@ const Profile = ({ navigation }) => {
               imageHeight={width}
             >
               <Image
-                source={profileImage ? { uri: profileImage } : require('../../../assets/default-avatar.png')}
+                source={profileImage ? { uri: profileImage } : DEFAULT_AVATAR}
                 style={{
                   width: width,
                   height: width,

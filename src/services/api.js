@@ -551,3 +551,44 @@ export const getUserAvatar = async (userId, token) => {
     return null; // Trả về null thay vì ném lỗi để tránh crash UI
   }
 };
+
+// Get certificates for user
+export const getCertificates = async (userId, token) => {
+  try {
+    console.log('[API] Fetching certificates for user:', userId);
+    
+    const response = await api.get(`/Certificate/trainee/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    console.log('[API] Certificates response status:', response.status);
+    
+    let certificatesList = [];
+    if (Array.isArray(response.data)) {
+      console.log('[API] Setting directly from array, length:', response.data.length);
+      certificatesList = response.data;
+    } else if (response.data && Array.isArray(response.data.data)) {
+      console.log('[API] Setting from nested data property, length:', response.data.data.length);
+      certificatesList = response.data.data;
+    } else if (response.data && typeof response.data === 'object') {
+      console.log('[API] Response is object, keys:', Object.keys(response.data));
+      // If object can be converted to array
+      if (response.data && Object.keys(response.data).length > 0) {
+        try {
+          const possibleArray = Object.values(response.data);
+          if (Array.isArray(possibleArray[0])) {
+            console.log('[API] Setting from first array value in object, length:', possibleArray[0].length);
+            certificatesList = possibleArray[0];
+          }
+        } catch (err) {
+          console.error('[API] Error processing response data:', err);
+        }
+      }
+    }
+    
+    return certificatesList;
+  } catch (error) {
+    console.error('[API] Error fetching certificates:', error.response?.data || error.message);
+    throw error.response ? error.response.data : "Network error";
+  }
+};

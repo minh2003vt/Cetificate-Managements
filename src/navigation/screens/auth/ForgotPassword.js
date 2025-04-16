@@ -14,8 +14,8 @@ import {
   Keyboard,
   Alert
 } from "react-native";
-import { forgotPassword } from "../../services/api";
-
+import { forgotPassword } from "../../../services/api";
+import {FLIGHT_VAULT_LOGO } from "../../../utils/assets";
 const ForgotPassword = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
@@ -64,7 +64,7 @@ const ForgotPassword = ({ navigation }) => {
       >
         <View style={styles.formContainer}>
           <Image
-            source={require("../../../assets/flightvault-logo.png")}
+            source={FLIGHT_VAULT_LOGO}
             style={[styles.logo, { width: width * 0.7, height: height * 0.3 }]}
             resizeMode="contain"
           />

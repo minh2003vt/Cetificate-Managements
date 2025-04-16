@@ -1,0 +1,251 @@
+/* Certificate.css */
+.background {
+  flex: 1;
+  width: 100%;
+}
+
+.container {
+  flex: 1;
+  align-items: center;
+  padding-top: 40px;
+}
+
+.header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-horizontal: 20px;
+  margin-bottom: 5px;
+}
+
+.backButton {
+  padding: 5px;
+}
+
+.headerTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.subTitle {
+  font-size: 16px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.contentContainer {
+  flex: 1;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding-horizontal: 20px;
+}
+
+.certificateImageContainer {
+  width: 100%;
+  height: 60%;
+  margin-vertical: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  elevation: 5;
+  position: relative;
+}
+
+.certificateWebView {
+  width: 100%;
+  height: 100%;
+}
+
+.doubleTapHint {
+  position: absolute;
+  bottom: 10px;
+  align-self: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.webViewLoading {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f8f8;
+}
+
+.exportButton {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #1D72F3;
+  padding-vertical: 12px;
+  padding-horizontal: 20px;
+  border-radius: 8px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.exportText {
+  color: white;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.modalContainer {
+  flex: 1;
+  background-color: #000;
+  justify-content: center;
+  align-items: center;
+}
+
+.fullScreenWebView {
+  width: 100%;
+  height: 100%;
+}
+
+.closeButton {
+  position: absolute;
+  top: 54px;
+  right: 20px;
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
+  padding: 8px;
+}
+
+.errorContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  width: 100%;
+  background-color: white;
+  border-top-left-radius: 50px;
+  border-top-right-radius: 50px;
+}
+
+.errorText {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #FF6B6B;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.loadingContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.loadingText {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #0000ff;
+}
+
+.debugInfo {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  width: 90%;
+}
+
+.debugText {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+.buttonsContainer {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.fullscreenActionButton {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: #28a745;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.actionButtonText {
+  color: #fff;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.retryButton {
+  background-color: #1D72F3;
+  padding-horizontal: 20px;
+  padding-vertical: 10px;
+  border-radius: 5px;
+}
+
+.retryButtonText {
+  color: #FFF;
+  font-weight: bold;
+}
+
+.webviewContainer {
+  flex: 1;
+  width: 100%;
+  height: 60%;
+  margin-vertical: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.zoomedWebviewContainer {
+  elevation: 10;
+}
+
+.webview {
+  width: 100%;
+  height: 100%;
+}
+
+.buttonContainer {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #1D72F3;
+  padding-vertical: 12px;
+  padding-horizontal: 20px;
+  border-radius: 8px;
+}
+
+.buttonText {
+  color: #FFF;
+  font-weight: bold;
+  margin-left: 8px;
+} 

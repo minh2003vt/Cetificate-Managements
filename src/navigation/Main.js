@@ -10,16 +10,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUnreadCount } from '../services/api';
 import { EventRegister } from 'react-native-event-listeners';
 
-import Home from "../../src/navigation/screens/Home";
-import Notifications from "../../src/navigation/screens/Notifications";
-import History from "../../src/navigation/screens/History";
-import Courses from "../../src/navigation/screens/Courses";
-import CourseDetail from "../../src/navigation/screens/CourseDetail";
-import TrainingPlan from "../../src/navigation/screens/TrainingPlan"; // Import TrainingPlan
-import TrainingPlanDetail from "../../src/navigation/screens/TrainingPlanDetail"; // Import TrainingPlanDetail
-import Certificate from "../../src/navigation/screens/Certificate";
-import Schedule from "../../src/navigation/screens/Schedule";
-import Profile from "../../src/navigation/screens/Profile";
+// Import các component từ thư mục mới thông qua index.js
+import { Home, Schedule } from '../../src/navigation/screens/home';
+import { Notifications } from '../../src/navigation/screens/notifications';
+import { History, Certificate } from '../../src/navigation/screens/history';
+import { Courses, CourseDetail, TrainingPlan, TrainingPlanDetail } from '../../src/navigation/screens/training';
+import { Profile } from '../../src/navigation/screens/profile';
 
 const HomeTabs = 'Home';
 const NotificationsTabs = 'Notification';

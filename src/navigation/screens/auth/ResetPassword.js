@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions, Alert, ImageBackground } from "react-native";
-import { resetPassword } from "../../services/api";
-
+import { resetPassword } from "../../../services/api";
+import { BACKGROUND_HOMEPAGE,FLIGHT_VAULT_LOGO } from "../../../utils/assets";
 const ResetPassword = ({ route, navigation }) => {
   const { width, height } = useWindowDimensions();
   const [newPassword, setNewPassword] = useState("");
@@ -70,14 +70,13 @@ const ResetPassword = ({ route, navigation }) => {
   };
 
   return (
-    <ImageBackground 
-      source={require("../../../assets/Background-homepage.png")}
+    <ImageBackground
+      source={BACKGROUND_HOMEPAGE}
       style={styles.background}
-      resizeMode="cover"
     >
       <View style={styles.container}>
         <Image
-          source={require("../../../assets/flightvault-logo.png")}
+          source={FLIGHT_VAULT_LOGO}
           style={[styles.logo, { width: width * 0.7, height: height * 0.3 }]}
           resizeMode="contain"
         />

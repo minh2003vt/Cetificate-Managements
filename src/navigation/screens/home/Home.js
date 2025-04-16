@@ -6,9 +6,9 @@ import {
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getNotifications, getUnreadCount } from "../../services/api";
+import { getNotifications, getUnreadCount } from "../../../services/api";
 import { EventRegister } from "react-native-event-listeners";
-
+import { BACKGROUND_HOMEPAGE, DEFAULT_AVATAR } from "../../../utils/assets";
 const Home = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState("");
@@ -187,7 +187,7 @@ const Home = () => {
 
   return (
     <ImageBackground 
-      source={require("../../../assets/Background-homepage.png")} 
+      source={BACKGROUND_HOMEPAGE} 
       style={styles.background}
       resizeMode="cover"
     >
@@ -204,7 +204,7 @@ const Home = () => {
             </View>
             <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
               <Image 
-                source={userAvatar ? { uri: userAvatar } : require("../../../assets/default-avatar.png")}
+                source={userAvatar ? { uri: userAvatar } : DEFAULT_AVATAR}
                 style={styles.avatar} 
               />
             </TouchableOpacity>

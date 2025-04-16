@@ -10,8 +10,8 @@ import {
   SafeAreaView,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { getTrainingPlanUser, getSpecialty, getCourse } from '../../services/api';
-
+import { getTrainingPlanUser, getSpecialty, getCourse } from '../../../services/api';
+ 
 const Courses = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
 
@@ -44,7 +44,7 @@ const Courses = ({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../../../assets/Background-homepage.png")}
+      source={BACKGROUND_HOMEPAGE}
       style={styles.background}
       resizeMode="cover"
     >

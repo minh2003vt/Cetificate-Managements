@@ -1,0 +1,270 @@
+/* Profile.css */
+.container {
+  flex: 1;
+}
+
+.background {
+  flex: 1;
+  width: 100%;
+}
+
+.header {
+  padding: 20px;
+  align-items: center;
+  margin-top: 40px;
+}
+
+.headerTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.avatarContainer {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+}
+
+.editAvatarButton {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: #1D72F3;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  justify-content: center;
+  align-items: center;
+}
+
+.userName {
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  margin-top: 10px;
+}
+
+.userRole {
+  font-size: 16px;
+  color: white;
+  opacity: 0.8;
+}
+
+.tabContainer {
+  flex-direction: row;
+  margin-top: 20px;
+  border-bottom-width: 1px;
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  align-items: center;
+}
+
+.activeTab {
+  border-bottom-width: 2px;
+  border-bottom-color: white;
+}
+
+.tabText {
+  font-size: 16px;
+  color: white;
+  opacity: 0.7;
+}
+
+.activeTabText {
+  opacity: 1;
+  font-weight: bold;
+}
+
+.formContainer {
+  background-color: white;
+  border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+  flex: 1;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.formTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.inputContainer {
+  margin-bottom: 15px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.input {
+  height: 50px;
+  border-width: 1px;
+  border-color: #ddd;
+  border-radius: 8px;
+  padding-horizontal: 10px;
+  font-size: 16px;
+}
+
+.genderContainer {
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.radioButton {
+  flex-direction: row;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.radioOuterCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  border-width: 1px;
+  border-color: #1D72F3;
+  align-items: center;
+  justify-content: center;
+  margin-right: 5px;
+}
+
+.radioInnerCircle {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  background-color: #1D72F3;
+}
+
+.radioLabel {
+  font-size: 16px;
+  color: #333;
+}
+
+.datePickerButton {
+  height: 50px;
+  border-width: 1px;
+  border-color: #ddd;
+  border-radius: 8px;
+  padding-horizontal: 10px;
+  justify-content: center;
+}
+
+.dateText {
+  font-size: 16px;
+  color: #333;
+}
+
+.saveButton {
+  background-color: #1D72F3;
+  padding: 15px;
+  border-radius: 8px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.saveButtonText {
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.logoutButton {
+  border-width: 1px;
+  border-color: #FF6B6B;
+  padding: 15px;
+  border-radius: 8px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.logoutButtonText {
+  color: #FF6B6B;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.confirmModal {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  width: 300px;
+  align-items: center;
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.modalMessage {
+  font-size: 16px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.modalButtons {
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 12px;
+  border-width: 1px;
+  border-color: #ddd;
+  border-radius: 5px;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.cancelButtonText {
+  color: #666;
+  font-size: 16px;
+}
+
+.confirmButton {
+  flex: 1;
+  padding: 12px;
+  background-color: #FF6B6B;
+  border-radius: 5px;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.confirmButtonText {
+  color: white;
+  font-size: 16px;
+} 

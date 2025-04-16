@@ -3,10 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { ThemeProvider } from './src/context/ThemeContext';
 import Main from './src/navigation/Main';
-import Login from './src/navigation/screens/Login';
-import ForgotPassword from './src/navigation/screens/ForgotPassword';
-import ResetPassword from './src/navigation/screens/ResetPassword';
-import Schedule from "./src/navigation/screens/Schedule";
+import Login from './src/navigation/screens/auth/Login';
+import ForgotPassword from './src/navigation/screens/auth/ForgotPassword';
+import ResetPassword from './src/navigation/screens/auth/ResetPassword';
+import Schedule from "./src/navigation/screens/home/Schedule";
 import { navigationRef } from "./src/utils/navigationService"; // Thêm dòng này
 
 const Stack = createStackNavigator();

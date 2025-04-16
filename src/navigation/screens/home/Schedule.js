@@ -11,12 +11,12 @@ import {
     useWindowDimensions
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext';
-import { getSchedule, getUserById } from '../../services/api';
+import { useTheme } from '../../../context/ThemeContext';
+import { getSchedule, getUserById } from '../../../services/api';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isWithinInterval, addMinutes, addHours } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK } from '../../../utils/assets';
 // Helper function to check if a date has events
 const hasEvents = (dateKey, data) => {
     // Check if the key exists and the array is not empty
@@ -379,7 +379,6 @@ const Schedule = ({ navigation }) => {
             console.log('Schedule data set successfully');
         } catch (error) {
             console.error('Error fetching schedule data:', error);
-            setError('Failed to load schedule. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -724,13 +723,28 @@ const Schedule = ({ navigation }) => {
             color: 'white',
             fontWeight: 'bold',
         },
+        errorBanner: {
+            backgroundColor: '#FFEBEE',
+            padding: 10,
+            margin: 10,
+            borderRadius: 5,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        errorBannerText: {
+            color: '#D32F2F',
+            fontSize: 14,
+            flex: 1,
+            marginRight: 10,
+        },
     });
 
     return (
         <ImageBackground
             source={isDarkMode
-                ? require("../../../assets/Background-Dark.png")
-                : require("../../../assets/Background-homepage.png")
+                ? BACKGROUND_DARK
+                : BACKGROUND_HOMEPAGE
             }
             style={styles.background}
             resizeMode="cover"
@@ -752,16 +766,6 @@ const Schedule = ({ navigation }) => {
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color="#FFFFFF" />
                         <Text style={styles.loadingText}>Loading Schedule...</Text>
-                    </View>
-                ) : error ? (
-                    <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{error}</Text>
-                        <TouchableOpacity 
-                            style={styles.refreshButton}
-                            onPress={fetchScheduleData}
-                        >
-                            <Text style={styles.refreshButtonText}>Try Again</Text>
-                        </TouchableOpacity>
                     </View>
                 ) : (
                     <View style={styles.contentArea}>
@@ -811,6 +815,18 @@ const Schedule = ({ navigation }) => {
                             contentContainerStyle={{paddingBottom: 80}}
                             showsVerticalScrollIndicator={true}
                         >
+                            {error && (
+                                <View style={styles.errorBanner}>
+                                    <Text style={styles.errorBannerText}>{error}</Text>
+                                    <TouchableOpacity 
+                                        style={styles.refreshButton}
+                                        onPress={fetchScheduleData}
+                                    >
+                                        <Text style={styles.refreshButtonText}>Try Again</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                            
                             {currentWeekDates.map((date, dateIndex) => {
                                 const dateKey = format(date, 'yyyy-MM-dd');
                                 const events = scheduleData[dateKey] || [];

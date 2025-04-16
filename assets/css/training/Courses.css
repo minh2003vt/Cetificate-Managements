@@ -1,0 +1,158 @@
+/* Courses.css */
+.container {
+  flex: 1;
+}
+
+.background {
+  flex: 1;
+  width: 100%;
+}
+
+.header {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 40px;
+}
+
+.headerTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.coursesList {
+  flex: 1;
+  padding: 10px;
+}
+
+.courseCard {
+  background-color: white;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.courseHeader {
+  padding: 15px;
+  border-bottom-width: 1px;
+  border-bottom-color: #f0f0f0;
+}
+
+.courseTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.courseSubTitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.progressContainer {
+  height: 10px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 10px;
+  background-color: #1D72F3;
+}
+
+.courseBody {
+  padding: 15px;
+}
+
+.infoRow {
+  flex-direction: row;
+  margin-bottom: 10px;
+}
+
+.infoLabel {
+  width: 100px;
+  font-size: 14px;
+  color: #666;
+}
+
+.infoValue {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.courseFooter {
+  padding: 15px;
+  border-top-width: 1px;
+  border-top-color: #f0f0f0;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.detailButton {
+  background-color: #1D72F3;
+  padding-horizontal: 20px;
+  padding-vertical: 10px;
+  border-radius: 5px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.detailButtonText {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.noCourseContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.noCourseText {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.loadingContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.errorContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.errorText {
+  text-align: center;
+  color: #FF6B6B;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.retryButton {
+  background-color: #1D72F3;
+  padding-horizontal: 20px;
+  padding-vertical: 10px;
+  border-radius: 5px;
+}
+
+.retryButtonText {
+  color: #FFF;
+  font-weight: bold;
+} 

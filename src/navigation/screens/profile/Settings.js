@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../context/ThemeContext';
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK , DEFAULT_AVATAR } from '../../../utils/assets';
 
 export default function Settings() {
   const navigation = useNavigation(); // Hook để điều hướng
@@ -85,7 +86,7 @@ export default function Settings() {
 
   return (
     <ImageBackground 
-      source={require("../../../assets/Background-homepage.png")} 
+      source={BACKGROUND_HOMEPAGE} 
       style={styles.background}
       resizeMode="cover"
     >
@@ -96,7 +97,7 @@ export default function Settings() {
       >
         <View style={styles.container}>
           <View style={styles.profileContainer}>
-            <Image source={require("../../../assets/default-avatar.png")} style={styles.avatar} />
+            <Image source={DEFAULT_AVATAR} style={styles.avatar} />
             <Text style={[styles.name, { color: theme.textUpper }]}>{fullName}</Text>
             <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: {userId}</Text>
           </View>

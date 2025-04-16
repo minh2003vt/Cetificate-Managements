@@ -1,0 +1,171 @@
+/* Schedule.css */
+.background {
+  flex: 1;
+  width: 100%;
+}
+
+.container {
+  flex: 1;
+}
+
+.header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.headerTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.calendarContainer {
+  background-color: white;
+  border-radius: 20px;
+  padding: 15px;
+  margin: 10px;
+}
+
+.weekHeader {
+  flex-direction: row;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.dayContainer {
+  align-items: center;
+  width: 40px;
+}
+
+.dayText {
+  font-size: 14px;
+  color: #666;
+}
+
+.dateContainer {
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+  border-radius: 20px;
+}
+
+.selectedDate {
+  background-color: #1D72F3;
+}
+
+.dateText {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.selectedDateText {
+  color: white;
+}
+
+.schedulesList {
+  flex: 1;
+  padding: 10px;
+}
+
+.scheduleItem {
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  flex-direction: row;
+}
+
+.timeContainer {
+  width: 70px;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeText {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1D72F3;
+  text-align: center;
+}
+
+.eventDivider {
+  width: 1px;
+  height: 100%;
+  background-color: #e1e1e1;
+  margin-horizontal: 15px;
+}
+
+.eventInfoContainer {
+  flex: 1;
+  flex-direction: column;
+}
+
+.eventTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.roomText {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+}
+
+.instructorText {
+  font-size: 14px;
+  color: #666;
+}
+
+.noScheduleContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.noScheduleText {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.loadingContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.errorContainer {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.errorText {
+  text-align: center;
+  color: #FF6B6B;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.retryButton {
+  background-color: #1D72F3;
+  padding-horizontal: 20px;
+  padding-vertical: 10px;
+  border-radius: 5px;
+}
+
+.retryButtonText {
+  color: #FFF;
+  font-weight: bold;
+} 

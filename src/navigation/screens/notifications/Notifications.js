@@ -16,11 +16,11 @@ import {
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getNotifications, markAsRead, getUnreadCount } from '../../services/api';
+import { getNotifications, markAsRead, getUnreadCount } from '../../../services/api';
 import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
 import { EventRegister } from 'react-native-event-listeners';
-
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK } from '../../../utils/assets';
 const Notification = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const [searchText, setSearchText] = useState("");
@@ -206,8 +206,8 @@ const Notification = ({ navigation }) => {
   );
 
   return (
-    <ImageBackground
-      source={require("../../../assets/Background-homepage.png")}
+    <ImageBackground 
+      source={BACKGROUND_HOMEPAGE}
       style={styles.background}
       resizeMode="cover"
     >

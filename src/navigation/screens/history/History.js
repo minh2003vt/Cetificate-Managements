@@ -4,19 +4,16 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   ImageBackground,
   useWindowDimensions,
   SafeAreaView,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import { BACKGROUND_HOMEPAGE } from '../../utils/assets';
-import { getCourse } from '../../services/api';
-
-const API_BASE_URL = "https://ocms-bea4aagveeejawff.southeastasia-01.azurewebsites.net/api";
+import { BACKGROUND_HOMEPAGE, HISTORY_STYLES } from '../../../utils/assets';
+import { getCourse, getCertificates } from '../../../services/api';
 
 const History = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
@@ -38,7 +35,7 @@ const History = ({ navigation }) => {
       
       const courseNamesMap = {};
       
-      // Lấy thông tin khóa học cho từng courseId
+      // Get course information for each courseId
       for (const courseId of uniqueCourseIds) {
         if (!courseId) continue;
         
@@ -47,11 +44,11 @@ const History = ({ navigation }) => {
           if (courseData && courseData.courseName) {
             courseNamesMap[courseId] = courseData.courseName;
           } else {
-            courseNamesMap[courseId] = "Khóa học N/A";
+            courseNamesMap[courseId] = "Course N/A";
           }
         } catch (err) {
           console.error(`[History] Error fetching course name for ID ${courseId}:`, err);
-          courseNamesMap[courseId] = "Khóa học N/A";
+          courseNamesMap[courseId] = "Course N/A";
         }
       }
       
@@ -63,159 +60,51 @@ const History = ({ navigation }) => {
   };
 
   useEffect(() => {
-    console.log('[NETWORK DEBUG] History component mounted');
+    console.log('[History] Component mounted');
     
-    const fetchCertificates = async () => {
+    const fetchCertificatesData = async () => {
       try {
-        console.log('[NETWORK DEBUG] History - Bắt đầu fetching certificates');
+        console.log('[History] Starting certificates fetch');
         setLoading(true);
         
-        // Lấy thông tin xác thực
+        // Get authentication info
         const userToken = await AsyncStorage.getItem("userToken");
         const userId = await AsyncStorage.getItem("userId");
         
-        console.log('[NETWORK DEBUG] History - UserId:', userId);
-        console.log('[NETWORK DEBUG] History - Token có sẵn:', !!userToken);
+        console.log('[History] UserId:', userId);
+        console.log('[History] Token available:', !!userToken);
         
         if (!userToken || !userId) {
-          throw new Error("Bạn cần đăng nhập để xem chứng chỉ");
+          throw new Error("You need to login to view certificates");
         }
         
-        // Log trước khi gửi request
-        console.log('[NETWORK DEBUG] History - Sending request to:', `${API_BASE_URL}/Certificate/trainee/${userId}`);
-        console.log('[NETWORK DEBUG] History - Headers:', { Authorization: `Bearer ${userToken.substring(0, 10)}...` });
-        
-        // Tạo axios interceptor tạm thời cho request này
-        const axiosInstance = axios.create();
-        
-        axiosInstance.interceptors.request.use(
-          config => {
-            console.log('[NETWORK DEBUG] History - Full request config:', {
-              url: config.url,
-              method: config.method,
-              headers: config.headers
-            });
-            return config;
-          },
-          error => {
-            console.error('[NETWORK DEBUG] History - Request error interceptor:', error);
-            return Promise.reject(error);
-          }
-        );
-        
-        axiosInstance.interceptors.response.use(
-          response => {
-            console.log('[NETWORK DEBUG] History - Response status:', response.status);
-            console.log('[NETWORK DEBUG] History - Response headers:', response.headers);
-            return response;
-          },
-          error => {
-            if (error.response) {
-              console.error('[NETWORK DEBUG] History - Error response:', {
-                status: error.response.status,
-                headers: error.response.headers,
-                data: error.response.data
-              });
-            } else if (error.request) {
-              console.error('[NETWORK DEBUG] History - No response received:', error.request);
-            } else {
-              console.error('[NETWORK DEBUG] History - Error setting up request:', error.message);
-            }
-            return Promise.reject(error);
-          }
-        );
-        
-        // Gửi request với interceptors
-        const response = await axiosInstance.get(
-          `${API_BASE_URL}/Certificate/trainee/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${userToken}`,
-            },
-          }
-        );
-        
-        console.log("[NETWORK DEBUG] History - Certificates response status:", response.status);
-        console.log("[NETWORK DEBUG] History - Certificates data type:", typeof response.data);
-        console.log("[NETWORK DEBUG] History - Is array?", Array.isArray(response.data));
-        console.log("[NETWORK DEBUG] History - Data sample:", 
-          JSON.stringify(Array.isArray(response.data) ? response.data.slice(0, 1) : response.data).substring(0, 300)
-        );
-        
-        let certificatesList = [];
-        if (Array.isArray(response.data)) {
-          console.log("[NETWORK DEBUG] History - Setting directly from array, length:", response.data.length);
-          certificatesList = response.data;
-        } else if (response.data && Array.isArray(response.data.data)) {
-          console.log("[NETWORK DEBUG] History - Setting from nested data property, length:", response.data.data.length);
-          certificatesList = response.data.data;
-        } else if (response.data && typeof response.data === 'object') {
-          console.log("[NETWORK DEBUG] History - Response is object, keys:", Object.keys(response.data));
-          // Nếu đối tượng có thể chuyển đổi thành mảng
-          if (response.data && Object.keys(response.data).length > 0) {
-            try {
-              const possibleArray = Object.values(response.data);
-              if (Array.isArray(possibleArray[0])) {
-                console.log("[NETWORK DEBUG] History - Setting from first array value in object, length:", possibleArray[0].length);
-                certificatesList = possibleArray[0];
-              }
-            } catch (err) {
-              console.error("[NETWORK DEBUG] History - Error processing response data:", err);
-            }
-          }
-        }
+        // Get certificates using the API function
+        const certificatesList = await getCertificates(userId, userToken);
         
         setCertificates(certificatesList);
         
-        // Sau khi lấy danh sách chứng chỉ, lấy tên các khóa học
+        // After getting certificates, fetch their course names
         await fetchCourseNames(certificatesList);
         
         setError(null);
       } catch (err) {
-        console.error("[NETWORK DEBUG] History - Error fetching certificates:", err);
-        console.error("[NETWORK DEBUG] History - Error details:", {
+        console.error("[History] Error fetching certificates:", err);
+        console.error("[History] Error details:", {
           message: err.message,
           name: err.name,
           stack: err.stack
         });
-        setError("Không thể lấy danh sách chứng chỉ. Vui lòng thử lại sau.");
+        setError("Unable to load certificates. Please try again later.");
       } finally {
         setLoading(false);
-        console.log('[NETWORK DEBUG] History - Fetch complete');
+        console.log('[History] Fetch complete');
       }
     };
 
-    fetchCertificates();
+    fetchCertificatesData();
   }, []);
 
-  // Thêm useEffect để ghi log API calls
-  useEffect(() => {
-    console.log('[NETWORK DEBUG] History component mounted');
-    
-    // Thêm interceptor cho Axios hoặc Fetch
-    const originalFetch = global.fetch;
-    
-    global.fetch = function(url, options) {
-      console.log('[NETWORK DEBUG] History - Fetch request:', url, options);
-      return originalFetch(url, options)
-        .then(response => {
-          console.log('[NETWORK DEBUG] History - Fetch response status:', response.status);
-          return response;
-        })
-        .catch(error => {
-          console.error('[NETWORK DEBUG] History - Fetch error:', error);
-          throw error;
-        });
-    };
-    
-    // Khôi phục fetch gốc khi component unmount
-    return () => {
-      global.fetch = originalFetch;
-      console.log('[NETWORK DEBUG] History component unmounted');
-    };
-  }, []);
-
-  // Hàm format ngày tháng
+  // Format date function
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -225,7 +114,7 @@ const History = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => {
-    // Lấy tên khóa học từ state courseNames nếu có, nếu không, sử dụng courseId
+    // Get course name from courseNames state if available, otherwise use courseId
     const courseName = courseNames[item.courseId] || `Course ID: ${item.courseId}`;
     
     return (
@@ -251,12 +140,7 @@ const History = ({ navigation }) => {
               : item.status || "Status N/A"}
           </Text>
         </View>
-        <FontAwesome
-          name={item.status === "Active" ? "check-circle" : "hourglass-half"}
-          size={30}
-          color={item.status === "Active" ? "green" : "white"}
-          style={styles.icon}
-        />
+        <FontAwesome name="arrow-right" size={24} color="#43546A" />
       </TouchableOpacity>
     );
   };
@@ -288,7 +172,7 @@ const History = ({ navigation }) => {
                 style={styles.retryButton}
                 onPress={() => {
                   setLoading(true);
-                  fetchCertificates();
+                  fetchCertificatesData();
                 }}
               >
                 <Text style={styles.retryButtonText}>Thử lại</Text>
@@ -297,7 +181,7 @@ const History = ({ navigation }) => {
           ) : certificates.length === 0 ? (
             <View style={styles.emptyContainer}>
               <FontAwesome name="certificate" size={50} color="#B8C4D1" />
-              <Text style={styles.emptyText}>Bạn chưa có chứng chỉ nào.</Text>
+              <Text style={styles.emptyText}>You dont have any certificate yet.</Text>
             </View>
           ) : (
           <FlatList

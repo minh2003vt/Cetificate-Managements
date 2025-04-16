@@ -20,7 +20,7 @@ import {
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import { WebView } from 'react-native-webview';
-import { BACKGROUND_HOMEPAGE } from '../../utils/assets';
+import { BACKGROUND_HOMEPAGE } from '../../../utils/assets';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -122,12 +122,12 @@ const Certificate = () => {
       // Trong trường hợp này, certificateData đã chứa SAS URL
       // Logic fetch có thể được thêm vào đây nếu cần
       if (!certificateData || !certificateData.certificateURLwithSas) {
-        console.error('Error: Không có SAS URL');
-        setError('Không thể tải chứng chỉ. Vui lòng thử lại.');
+        console.error('Error: No SAS URL');
+        setError('Unable to load certificate. Please try again.');
       }
     } catch (err) {
       console.error('Error fetching SAS URL:', err);
-      setError('Không thể tải chứng chỉ. Vui lòng thử lại.');
+      setError('Unable to load certificate. Please try again.');
     }
   };
 
@@ -148,8 +148,8 @@ const Certificate = () => {
       const sasUrl = certificateData.certificateURLwithSas;
       
       if (!sasUrl) {
-        console.error("[Certificate] SAS URL không có sẵn - không thể hiển thị chứng chỉ từ Azure Blob Storage!");
-        setError("SAS URL không có sẵn. Không thể hiển thị chứng chỉ từ Azure Blob Storage. Vui lòng liên hệ quản trị viên.");
+        console.error("[Certificate] SAS URL not available - cannot display certificate from Azure Blob Storage!");
+        setError("SAS URL not available. Cannot display certificate from Azure Blob Storage. Please contact administrator.");
         return;
       }
       
@@ -159,14 +159,14 @@ const Certificate = () => {
         
         // Kiểm tra xem URL có phải là Azure Blob Storage URL với SAS token
         if (urlObj.href.includes("blob.core.windows.net") && urlObj.search.includes("sig=")) {
-          console.log("[Certificate] URL là Azure Blob Storage URL hợp lệ với SAS token");
+          console.log("[Certificate] URL is valid Azure Blob Storage URL with SAS token");
         } else {
-          console.warn("[Certificate] URL có thể không phải là Azure Blob Storage URL hợp lệ với SAS token");
+          console.warn("[Certificate] URL may not be a valid Azure Blob Storage URL with SAS token");
         }
       } catch (err) {
         console.error("[Certificate] Invalid URL format:", err.message);
         console.dir(err);
-        setError(`Định dạng URL không hợp lệ: ${err.message}`);
+        setError(`Invalid URL format: ${err.message}`);
       }
     } else {
       console.error("[Certificate] certificateData is null or undefined");
@@ -185,10 +185,10 @@ const Certificate = () => {
   // Phương thức tải xuống đơn giản bằng trình duyệt
   const downloadCertificateFile = async () => {
     try {
-      console.log("[Certificate] Bắt đầu tải chứng chỉ");
+      console.log("[Certificate] Starting certificate download");
       
       if (!certificateData || !certificateData.certificateURLwithSas) {
-        Alert.alert("Thông báo", "Không thể tải xuống. URL chứng chỉ không có sẵn.");
+        Alert.alert("Notice", "Unable to download. Certificate URL not available.");
         return;
       }
 
@@ -203,17 +203,17 @@ const Certificate = () => {
         await Linking.openURL(downloadUrl);
         
         if (Platform.OS === 'android') {
-          ToastAndroid.show("Đang mở trình duyệt để tải xuống...", ToastAndroid.SHORT);
+          ToastAndroid.show("Opening browser for download...", ToastAndroid.SHORT);
         }
         
-        console.log("[Certificate] Đã mở trình duyệt để tải xuống");
+        console.log("[Certificate] Browser opened for download");
       } else {
-        console.error("[Certificate] Không thể mở URL:", downloadUrl);
-        Alert.alert("Lỗi", "Không thể mở URL trong trình duyệt.");
+        console.error("[Certificate] Cannot open URL:", downloadUrl);
+        Alert.alert("Error", "Cannot open URL in browser.");
       }
     } catch (error) {
-      console.error("[Certificate] Lỗi khi tải xuống:", error);
-      Alert.alert("Lỗi", "Không thể tải xuống chứng chỉ. Vui lòng thử lại sau.");
+      console.error("[Certificate] Error during download:", error);
+      Alert.alert("Error", "Cannot download certificate. Please try again later.");
     }
   };
 
@@ -267,23 +267,26 @@ const Certificate = () => {
   // Xử lý lỗi HTTP
   const handleHttpError = (syntheticEvent) => {
     const { nativeEvent } = syntheticEvent;
-    console.error('[Certificate] HTTP error:', nativeEvent);
-    console.error('[Certificate] Status code:', nativeEvent.statusCode);
-    console.error('[Certificate] URL with error:', nativeEvent.url);
     
-    let errorMessage = `Lỗi HTTP (${nativeEvent.statusCode})`;
-    
-    if (nativeEvent.statusCode === 404) {
-      errorMessage = "Không tìm thấy tài liệu chứng chỉ (404). URL có thể không đúng hoặc tài liệu đã bị xóa.";
-    } else if (nativeEvent.statusCode === 403) {
-      errorMessage = "Không có quyền truy cập tài liệu (403). Đường dẫn chứng chỉ có thể đã hết hạn.";
-    } else if (nativeEvent.statusCode >= 500) {
-      errorMessage = `Lỗi máy chủ (${nativeEvent.statusCode}). Vui lòng thử lại sau.`;
+    if (nativeEvent.statusCode) {
+      console.error(`[Certificate] HTTP Status Error: ${nativeEvent.statusCode}`);
+      
+      if (loadAttempts < 3) {
+        console.log(`[Certificate] Retrying load (Attempt ${loadAttempts + 1} of 3)...`);
+        setLoadAttempts(prev => prev + 1);
+        setTimeout(() => {
+          webViewRef.current?.reload();
+        }, 1000); // Thử lại sau 1 giây
+      } else {
+        setLoading(false);
+        setError('Unable to display certificate. Please try again.');
+        
+        // Hiển thị mã lỗi HTTP
+        if (nativeEvent.statusCode) {
+          setError(`HTTP Error: ${nativeEvent.statusCode}`);
+        }
+      }
     }
-    
-    console.error('[Certificate] Error message:', errorMessage);
-    setError(errorMessage);
-    setLoading(false);
   };
   
   // Xử lý tin nhắn từ WebView
@@ -314,15 +317,15 @@ const Certificate = () => {
   // Thêm hàm mở PDF trực tiếp trong trình duyệt
   const openInBrowser = async () => {
     try {
-      if (!certificateData) return;
-      
-      const url = certificateData.certificateURLwithSas || certificateData.certificateURL;
-      if (!url) return;
-      
-      await Linking.openURL(url);
-    } catch (err) {
-      console.error("Error opening in browser:", err);
-      Alert.alert("Lỗi", "Không thể mở trong trình duyệt. Vui lòng thử lại sau.");
+      if (!certificateData || !certificateData.certificateURLwithSas) {
+        console.error("[Certificate] URL not available for browser opening");
+        Alert.alert("Error", "Cannot open in browser. Please try again later.");
+        return;
+      }
+      await Linking.openURL(certificateData.certificateURLwithSas);
+    } catch (error) {
+      console.error("[Certificate] Error opening in browser:", error);
+      Alert.alert("Error", "Cannot open in browser. Please try again later.");
     }
   };
 
@@ -330,14 +333,13 @@ const Certificate = () => {
   const openDirectUrl = async () => {
     try {
       if (!certificateData || !certificateData.certificateURLwithSas) {
-        Alert.alert("Lỗi", "Không tìm thấy URL chứng chỉ");
+        Alert.alert("Error", "Certificate URL not found");
         return;
       }
-      
       await Linking.openURL(certificateData.certificateURLwithSas);
-    } catch (err) {
-      console.error("Error opening direct URL:", err);
-      Alert.alert("Lỗi", "Không thể mở URL trực tiếp. Vui lòng thử lại sau.");
+    } catch (error) {
+      console.error('[Certificate] Error opening direct URL:', error);
+      Alert.alert("Error", "Cannot open URL directly. Please try again later.");
     }
   };
 

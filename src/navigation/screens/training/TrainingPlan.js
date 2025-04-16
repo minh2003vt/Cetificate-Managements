@@ -11,9 +11,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { getTrainingPlanUser } from '../../services/api';
+import { getTrainingPlanUser } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../context/ThemeContext';
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK } from '../../../utils/assets';
 
 const TrainingPlan = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
@@ -21,6 +22,7 @@ const TrainingPlan = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { theme, isDarkMode } = useTheme();
+  const [noPlansMessage, setNoPlansMessage] = useState(null);
 
   useEffect(() => {
     fetchTrainingPlans();
@@ -29,6 +31,8 @@ const TrainingPlan = ({ navigation }) => {
   const fetchTrainingPlans = async () => {
     try {
       setLoading(true);
+      setNoPlansMessage(null);
+      setError(null);
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
         throw new Error('No token found');
@@ -39,6 +43,14 @@ const TrainingPlan = ({ navigation }) => {
       
       console.log('TrainingPlan.js - Raw response received:', typeof response);
       console.log('TrainingPlan.js - Response structure:', JSON.stringify(response, null, 2));
+      
+      // Check if response contains the specific message for no joined plans
+      if (response && response.message === 'No training plan joined.') {
+        console.log('No training plans joined message received');
+        setNoPlansMessage('U havent added to any training plan');
+        setTrainingPlans([]);
+        return;
+      }
       
       // Check for different response structures
       let plansData = [];
@@ -75,7 +87,12 @@ const TrainingPlan = ({ navigation }) => {
       }
     } catch (err) {
       console.error('Error fetching training plans:', err);
-      setError('Failed to load training plans');
+      if (err.message && err.message.includes('No training plan joined')) {
+        setNoPlansMessage('You havent been assigned to any training plan yet.');
+        setTrainingPlans([]);
+      } else {
+        setError('Failed to load training plans');
+      }
     } finally {
       setLoading(false);
     }
@@ -128,8 +145,8 @@ const TrainingPlan = ({ navigation }) => {
     return (
       <ImageBackground
         source={isDarkMode 
-          ? require("../../../assets/Background-Dark.png")
-          : require("../../../assets/Background-homepage.png")
+          ? BACKGROUND_DARK
+          : BACKGROUND_HOMEPAGE
         }
         style={styles.background}
         resizeMode="cover"
@@ -145,8 +162,8 @@ const TrainingPlan = ({ navigation }) => {
   return (
     <ImageBackground
       source={isDarkMode 
-        ? require("../../../assets/Background-Dark.png")
-        : require("../../../assets/Background-homepage.png")
+        ? BACKGROUND_DARK
+        : BACKGROUND_HOMEPAGE
       }
       style={styles.background}
       resizeMode="cover"
@@ -169,7 +186,9 @@ const TrainingPlan = ({ navigation }) => {
           ) : trainingPlans.length === 0 ? (
             <View style={styles.emptyContainer}>
               <FontAwesome name="info-circle" size={50} color="#009099" />
-              <Text style={styles.emptyText}>No training plans found</Text>
+              <Text style={styles.emptyText}>
+                {noPlansMessage || "No training plans found"}
+              </Text>
             </View>
           ) : (
             <FlatList

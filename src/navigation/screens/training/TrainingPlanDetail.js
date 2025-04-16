@@ -12,10 +12,10 @@ import {
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
-import { useTheme } from '../../context/ThemeContext';
-import { getSpecialty } from '../../services/api';
+import { useTheme } from '../../../context/ThemeContext';
+import { getSpecialty } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK } from '../../../utils/assets';
 const TrainingPlanDetail = ({ navigation }) => {
   const route = useRoute();
   const { trainingPlan } = route.params;
@@ -69,8 +69,8 @@ const TrainingPlanDetail = ({ navigation }) => {
   return (
     <ImageBackground
       source={isDarkMode 
-        ? require("../../../assets/Background-Dark.png")
-        : require("../../../assets/Background-homepage.png")
+        ? BACKGROUND_DARK
+        : BACKGROUND_HOMEPAGE
       }
       style={styles.background}
       resizeMode="cover"
