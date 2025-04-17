@@ -1,6 +1,7 @@
 import axios from "axios";
 import { navigate } from "../utils/navigationService"; // Import hàm điều hướng nếu có
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 const API_BASE_URL = "https://ocms-bea4aagveeejawff.southeastasia-01.azurewebsites.net/api/";
 
@@ -86,6 +87,13 @@ export const getNotifications = async (userId, token) => {
     });
     return response.data;
   } catch (error) {
+    // Kiểm tra lỗi "không tìm thấy thông báo"
+    if (error.response?.data?.message === "No notifications found for this user.") {
+      console.log("Không có thông báo cho người dùng này");
+      return { data: [] }; // Trả về mảng rỗng thay vì ném lỗi
+    }
+    // Các lỗi khác vẫn xử lý như cũ
+    console.error("Notification API error:", error.response?.data || error.message);
     throw error.response ? error.response.data : "Network error";
   }
 };
@@ -344,6 +352,10 @@ export const getSubject = async (subjectId, token) => {
     if (response.data && response.data.success && response.data.data) {
       // Extract from the nested data property
       return response.data.data;
+    } else if (response.data && response.data.subject) {
+      // Handle structure with {message, subject}
+      console.log('Found subject in response.subject:', response.data.subject);
+      return response.data.subject;
     } else if (response.data && response.data.subjectId) {
       // Direct access if not nested
       return response.data;
@@ -557,7 +569,7 @@ export const getCertificates = async (userId, token) => {
   try {
     console.log('[API] Fetching certificates for user:', userId);
     
-    const response = await api.get(`/Certificate/trainee/${userId}`, {
+    const response = await api.get(`/Certificate/trainee/view/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
@@ -590,5 +602,98 @@ export const getCertificates = async (userId, token) => {
   } catch (error) {
     console.error('[API] Error fetching certificates:', error.response?.data || error.message);
     throw error.response ? error.response.data : "Network error";
+  }
+};
+
+// Get user grades
+export const getUserGrades = async (userId, token) => {
+  try {
+    console.log('[API] Fetching grades for user:', userId);
+    
+    const response = await api.get(`/Grade/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    console.log('[API] Grades response status:', response.status);
+    
+    let gradesList = [];
+    if (Array.isArray(response.data)) {
+      console.log('[API] Setting directly from array, length:', response.data.length);
+      gradesList = response.data;
+    } else if (response.data && Array.isArray(response.data.data)) {
+      console.log('[API] Setting from nested data property, length:', response.data.data.length);
+      gradesList = response.data.data;
+    } else if (response.data && typeof response.data === 'object') {
+      console.log('[API] Response is object, keys:', Object.keys(response.data));
+      // If object can be converted to array
+      if (response.data && Object.keys(response.data).length > 0) {
+        try {
+          const possibleArray = Object.values(response.data);
+          if (Array.isArray(possibleArray[0])) {
+            console.log('[API] Setting from first array value in object, length:', possibleArray[0].length);
+            gradesList = possibleArray[0];
+          }
+        } catch (err) {
+          console.error('[API] Error processing response data:', err);
+        }
+      }
+    }
+    
+    return gradesList;
+  } catch (error) {
+    console.error('[API] Error fetching grades:', error.response?.data || error.message);
+    throw error.response ? error.response.data : "Network error";
+  }
+};
+
+// Import grades from Excel file
+export const uploadGradeExcel = async (fileUri, token) => {
+  try {
+    console.log('[API] Uploading grades Excel file:', fileUri);
+    
+    // Get file name from the URI
+    const fileName = fileUri.split('/').pop();
+    
+    // Create FormData object
+    const formData = new FormData();
+    formData.append('file', {
+      uri: Platform.OS === 'android' ? fileUri : fileUri.replace('file://', ''),
+      name: fileName,
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    
+    console.log('[API] FormData created with file:', fileName);
+    
+    // Log the formData to inspect what's being sent
+    for (const [key, value] of Object.entries(formData._parts)) {
+      console.log(`FormData part - ${key}:`, value);
+    }
+    
+    // Send the file to the API endpoint
+    const response = await axios.post(`${API_BASE_URL}/Grade/import`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
+      },
+    });
+    
+    console.log('[API] Excel upload response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] Error uploading Excel file:', error.response?.data || error.message);
+    
+    // Log detailed error information
+    if (error.response) {
+      console.error('[API] Error status:', error.response.status);
+      console.error('[API] Error headers:', error.response.headers);
+      console.error('[API] Error data:', error.response.data);
+    }
+    
+    if (error.response && error.response.data) {
+      throw error.response.data;
+    } else {
+      throw "Network error. Please check your connection and try again.";
+    }
   }
 };

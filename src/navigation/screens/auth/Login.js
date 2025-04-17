@@ -57,14 +57,38 @@ const Login = ({ navigation }) => {
       // Lưu token và userId
       await AsyncStorage.setItem("userToken", loginData.token);
       await AsyncStorage.setItem("userId", loginData.userID);
-      await AsyncStorage.setItem("userRole", userRole || "");
+      
+      // Xác định role từ các nguồn khác nhau
+      const userRoleDetermined = loginData.roles && loginData.roles.length > 0 
+        ? loginData.roles[0] 
+        : (loginData.role || "Unknown");
+        
+      await AsyncStorage.setItem("userRole", userRoleDetermined);
 
       // Lấy thông tin user từ API
       const userData = await getUserProfile(loginData.userID, loginData.token);
       console.log("User Profile Data:", userData);
       
       if (userData) {
-        // Lưu thông tin user vào storage
+        // Tạo đối tượng thông tin người dùng đầy đủ
+        const userInfo = {
+          userId: loginData.userID,
+          token: loginData.token,
+          fullName: userData.fullName || "",
+          email: userData.email || "",
+          phoneNumber: userData.phoneNumber || "",
+          address: userData.address || "",
+          gender: userData.gender || "",
+          dateOfBirth: userData.dateOfBirth || "",
+          avatarUrlWithSas: userData.avatarUrlWithSas || null,
+          role: userData.role || userRoleDetermined || "Unknown"
+        };
+        
+        // Lưu thông tin người dùng dưới dạng JSON
+        await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
+        console.log("Saved userInfo to AsyncStorage:", userInfo);
+        
+        // Vẫn giữ các mục riêng lẻ cho khả năng tương thích ngược
         await AsyncStorage.setItem("userFullName", userData.fullName || "");
         await AsyncStorage.setItem("userEmail", userData.email || "");
         await AsyncStorage.setItem("userPhone", userData.phoneNumber || "");

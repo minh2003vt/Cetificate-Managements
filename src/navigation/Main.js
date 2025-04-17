@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack'; // Import Stack Navigator
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@react-navigation/native';
-import { Image } from 'react-native';
+import { Image, Text, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,10 +11,11 @@ import { getUnreadCount } from '../services/api';
 import { EventRegister } from 'react-native-event-listeners';
 
 // Import các component từ thư mục mới thông qua index.js
-import { Home, Schedule } from '../../src/navigation/screens/home';
+import { Home, Schedule, ImportScore } from '../../src/navigation/screens/home';
 import { Notifications } from '../../src/navigation/screens/notifications';
 import { History, Certificate } from '../../src/navigation/screens/history';
 import { Courses, CourseDetail, TrainingPlan, TrainingPlanDetail } from '../../src/navigation/screens/training';
+import { Grade } from '../../src/navigation/screens/grade';
 import { Profile } from '../../src/navigation/screens/profile';
 
 const HomeTabs = 'Home';
@@ -72,16 +73,25 @@ function TrainingPlanStack() {
 function HomeStack() {
   return (
     <Stack.Navigator>
-            <Stack.Screen
+      <Stack.Screen
         name="Home"
         component={Home}
         options={{ headerShown: false }}
       />
-
       <Stack.Screen
         name="Schedule"
         component={Schedule}
         options={{ headerShown: false }} // Hide the header in Schedule screen
+      />
+      <Stack.Screen
+        name="Grade"
+        component={Grade}
+        options={{ headerShown: false }} // Hide the header in Grade screen
+      />
+      <Stack.Screen
+        name="ImportScore"
+        component={ImportScore}
+        options={{ headerShown: false }} // Hide the header in ImportScore screen
       />
     </Stack.Navigator>
   );
@@ -104,9 +114,100 @@ function ProfileStack() {
   );
 }
 
+// Stack Navigator for Grade
+function GradeStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Grade"
+        component={Grade}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 const Main = () => {
   const { theme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [userRole, setUserRole] = useState('');
+  const [showAllTabs, setShowAllTabs] = useState(true);
+
+  // Hàm kiểm tra các key trong AsyncStorage để debug
+  const checkAllStorageKeys = async () => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      console.log('All AsyncStorage keys:', keys);
+
+      // Kiểm tra từng key
+      for (const key of keys) {
+        const value = await AsyncStorage.getItem(key);
+        console.log(`Key: ${key}, Value:`, value);
+      }
+    } catch (error) {
+      console.error('Error checking AsyncStorage:', error);
+    }
+  };
+
+  // Lấy thông tin vai trò người dùng từ AsyncStorage
+  const getUserRole = async () => {
+    try {
+      // Kiểm tra tất cả các key trước
+      await checkAllStorageKeys();
+      
+      // Thử lấy từ userInfo
+      const userInfo = await AsyncStorage.getItem('userInfo');
+      console.log('Raw userInfo from storage:', userInfo);
+      
+      if (userInfo) {
+        try {
+          const parsedInfo = JSON.parse(userInfo);
+          console.log('Parsed userInfo:', parsedInfo);
+          
+          // Kiểm tra các trường có thể chứa vai trò
+          if (parsedInfo.role) {
+            console.log('Found role in parsedInfo.role:', parsedInfo.role);
+            setUserRole(parsedInfo.role);
+          } else if (parsedInfo.userRole) {
+            console.log('Found role in parsedInfo.userRole:', parsedInfo.userRole);
+            setUserRole(parsedInfo.userRole);
+          } else if (parsedInfo.user && parsedInfo.user.role) {
+            console.log('Found role in parsedInfo.user.role:', parsedInfo.user.role);
+            setUserRole(parsedInfo.user.role);
+          } else {
+            console.log('No role found in userInfo');
+          }
+        } catch (parseError) {
+          console.error('Error parsing userInfo:', parseError);
+        }
+      }
+      
+      // Thử lấy trực tiếp từ userRole key (nếu có)
+      const directRole = await AsyncStorage.getItem('userRole');
+      if (directRole) {
+        console.log('Found direct userRole:', directRole);
+        setUserRole(directRole);
+      }
+      
+      // Cập nhật trạng thái hiển thị tab dựa trên vai trò
+      updateTabVisibility();
+    } catch (error) {
+      console.error('Error getting user role:', error);
+    }
+  };
+
+  // Cập nhật trạng thái hiển thị tab dựa trên vai trò
+  const updateTabVisibility = () => {
+    const lowerRole = userRole.toLowerCase();
+    const isInstructorRole = lowerRole.includes('instructor') || 
+                             lowerRole.includes('teacher') || 
+                             lowerRole === 'trainer';
+    
+    console.log('Role lowercase:', lowerRole);
+    console.log('Is instructor role?', isInstructorRole);
+    
+    setShowAllTabs(!isInstructorRole);
+  };
 
   const loadUnreadCount = async () => {
     try {
@@ -124,6 +225,9 @@ const Main = () => {
   };
 
   useEffect(() => {
+    // Lấy thông tin vai trò người dùng khi component mount
+    getUserRole();
+    
     // Khởi tạo số lượng thông báo khi component mount
     loadUnreadCount();
     
@@ -150,13 +254,32 @@ const Main = () => {
       }
     );
 
+    // Lắng nghe sự kiện đăng nhập để cập nhật role
+    const loginListener = EventRegister.addEventListener(
+      'userLoggedIn',
+      (data) => {
+        console.log('User logged in event received:', data);
+        // Đợi 1 giây để đảm bảo AsyncStorage đã được cập nhật
+        setTimeout(() => {
+          getUserRole();
+        }, 1000);
+      }
+    );
+
     // Cleanup function
     return () => {
       EventRegister.removeEventListener(unreadCountListener);
       EventRegister.removeEventListener(newNotificationListener);
       EventRegister.removeEventListener(notificationReadListener);
+      EventRegister.removeEventListener(loginListener);
     };
   }, []);
+
+  // Cập nhật hiển thị tab khi userRole thay đổi
+  useEffect(() => {
+    console.log('userRole changed:', userRole);
+    updateTabVisibility();
+  }, [userRole]);
 
   return (
     <Tab.Navigator
@@ -213,55 +336,62 @@ const Main = () => {
           }
         })}
       />
-      <Tab.Screen
-        name="TrainingPlan"
-        component={TrainingPlanStack}
-        options={({ route, navigation }) => ({
-          tabBarLabel: 'Training Plan',
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={require('../../assets/Course.png')}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: '#FFFFFF'
-              }}
-            />
-          ),
-          tabBarItemStyle: {
-            flex: 1,
-            backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
-            marginHorizontal: 0,
-            borderRadius: 0,
-            paddingVertical: 8,
-            borderRightWidth: 1,
-            borderRightColor: '#2C3A4B',
-          }
-        })}
-      />
-      <Tab.Screen
-        name="History"
-        component={HistoryStack}
-        options={({ route, navigation }) => ({
-          tabBarLabel: 'History',
-          tabBarIcon: ({ focused }) => (
-            <FontAwesome
-              name="history"
-              size={24}
-              color="#FFFFFF"
-            />
-          ),
-          tabBarItemStyle: {
-            flex: 1,
-            backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
-            marginHorizontal: 0,
-            borderRadius: 0,
-            paddingVertical: 8,
-            borderRightWidth: 1,
-            borderRightColor: '#2C3A4B',
-          }
-        })}
-      />
+      
+      {showAllTabs && (
+        <Tab.Screen
+          name="TrainingPlan"
+          component={TrainingPlanStack}
+          options={({ route, navigation }) => ({
+            tabBarLabel: 'Training Plan',
+            tabBarIcon: ({ focused }) => (
+              <Image
+                source={require('../../assets/Course.png')}
+                style={{
+                  width: 24,
+                  height: 24,
+                  tintColor: '#FFFFFF'
+                }}
+              />
+            ),
+            tabBarItemStyle: {
+              flex: 1,
+              backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
+              marginHorizontal: 0,
+              borderRadius: 0,
+              paddingVertical: 8,
+              borderRightWidth: 1,
+              borderRightColor: '#2C3A4B',
+            }
+          })}
+        />
+      )}
+      
+      {showAllTabs && (
+        <Tab.Screen
+          name="History"
+          component={HistoryStack}
+          options={({ route, navigation }) => ({
+            tabBarLabel: 'History',
+            tabBarIcon: ({ focused }) => (
+              <FontAwesome
+                name="history"
+                size={24}
+                color="#FFFFFF"
+              />
+            ),
+            tabBarItemStyle: {
+              flex: 1,
+              backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
+              marginHorizontal: 0,
+              borderRadius: 0,
+              paddingVertical: 8,
+              borderRightWidth: 1,
+              borderRightColor: '#2C3A4B',
+            }
+          })}
+        />
+      )}
+      
       <Tab.Screen
         name="Notifications"
         component={Notifications}

@@ -59,48 +59,48 @@ const History = ({ navigation }) => {
     }
   };
 
+  // Di chuyển hàm fetchCertificatesData ra khỏi useEffect
+  const fetchCertificatesData = async () => {
+    try {
+      console.log('[History] Starting certificates fetch');
+      setLoading(true);
+      
+      // Get authentication info
+      const userToken = await AsyncStorage.getItem("userToken");
+      const userId = await AsyncStorage.getItem("userId");
+      
+      console.log('[History] UserId:', userId);
+      console.log('[History] Token available:', !!userToken);
+      
+      if (!userToken || !userId) {
+        throw new Error("You need to login to view certificates");
+      }
+      
+      // Get certificates using the API function
+      const certificatesList = await getCertificates(userId, userToken);
+      
+      setCertificates(certificatesList);
+      
+      // After getting certificates, fetch their course names
+      await fetchCourseNames(certificatesList);
+      
+      setError(null);
+    } catch (err) {
+      console.error("[History] Error fetching certificates:", err);
+      console.error("[History] Error details:", {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      });
+      setError("Unable to load certificates. Please try again later.");
+    } finally {
+      setLoading(false);
+      console.log('[History] Fetch complete');
+    }
+  };
+
   useEffect(() => {
     console.log('[History] Component mounted');
-    
-    const fetchCertificatesData = async () => {
-      try {
-        console.log('[History] Starting certificates fetch');
-        setLoading(true);
-        
-        // Get authentication info
-        const userToken = await AsyncStorage.getItem("userToken");
-        const userId = await AsyncStorage.getItem("userId");
-        
-        console.log('[History] UserId:', userId);
-        console.log('[History] Token available:', !!userToken);
-        
-        if (!userToken || !userId) {
-          throw new Error("You need to login to view certificates");
-        }
-        
-        // Get certificates using the API function
-        const certificatesList = await getCertificates(userId, userToken);
-        
-        setCertificates(certificatesList);
-        
-        // After getting certificates, fetch their course names
-        await fetchCourseNames(certificatesList);
-        
-        setError(null);
-      } catch (err) {
-        console.error("[History] Error fetching certificates:", err);
-        console.error("[History] Error details:", {
-          message: err.message,
-          name: err.name,
-          stack: err.stack
-        });
-        setError("Unable to load certificates. Please try again later.");
-      } finally {
-        setLoading(false);
-        console.log('[History] Fetch complete');
-      }
-    };
-
     fetchCertificatesData();
   }, []);
 
