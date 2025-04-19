@@ -15,7 +15,7 @@ import { Home, Schedule, ImportScore } from '../../src/navigation/screens/home';
 import { Notifications } from '../../src/navigation/screens/notifications';
 import { History, Certificate } from '../../src/navigation/screens/history';
 import { Courses, CourseDetail, TrainingPlan, TrainingPlanDetail } from '../../src/navigation/screens/training';
-import { Grade } from '../../src/navigation/screens/grade';
+import { Grade, ViewGrade } from '../../src/navigation/screens/grade';
 import { Profile } from '../../src/navigation/screens/profile';
 
 const HomeTabs = 'Home';
@@ -87,6 +87,11 @@ function HomeStack() {
         name="Grade"
         component={Grade}
         options={{ headerShown: false }} // Hide the header in Grade screen
+      />
+      <Stack.Screen
+        name="ViewGrade"
+        component={ViewGrade}
+        options={{ headerShown: false }} // Hide the header in ViewGrade screen
       />
       <Stack.Screen
         name="ImportScore"

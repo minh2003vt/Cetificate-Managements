@@ -2,13 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { 
   View, Text, TextInput, FlatList, Image, 
-  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator, useWindowDimensions, Alert
+  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator, useWindowDimensions, Alert,
+  Dimensions
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getNotifications, getUnreadCount } from "../../../services/api";
 import { EventRegister } from "react-native-event-listeners";
 import { BACKGROUND_HOMEPAGE, DEFAULT_AVATAR } from "../../../utils/assets";
+
+const { width: screenWidth } = Dimensions.get('window');
+const aspectRatio = 430 / 346; // height / width
 
 const Home = () => {
   const navigation = useNavigation();
@@ -329,7 +333,11 @@ const Home = () => {
                   icon: isInstructor ? "file-excel-o" : "history", 
                   navigateTo: isInstructor ? "ImportScore" : "History" 
                 },
-                { title: "Grade", icon: "graduation-cap", navigateTo: "Grade" },
+                { 
+                  title: "Grade", 
+                  icon: "graduation-cap", 
+                  navigateTo: isInstructor ? "ViewGrade" : "Grade" 
+                },
               ].map((item, index) => (
                 <TouchableOpacity
                   key={index}
@@ -404,14 +412,12 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    justifyContent: "flex-end",
+    width: '100%',
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 20,
   },
   contentWrapper: {
-    flex: 1,
     padding: 20,
     paddingTop: 40,
   },

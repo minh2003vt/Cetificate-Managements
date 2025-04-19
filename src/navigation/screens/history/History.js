@@ -47,12 +47,10 @@ const History = ({ navigation }) => {
             courseNamesMap[courseId] = "Course N/A";
           }
         } catch (err) {
-          console.error(`[History] Error fetching course name for ID ${courseId}:`, err);
           courseNamesMap[courseId] = "Course N/A";
         }
       }
       
-      console.log("[History] Fetched course names:", courseNamesMap);
       setCourseNames(courseNamesMap);
     } catch (err) {
       console.error("[History] Error fetching course names:", err);
@@ -62,27 +60,25 @@ const History = ({ navigation }) => {
   // Di chuyển hàm fetchCertificatesData ra khỏi useEffect
   const fetchCertificatesData = async () => {
     try {
-      console.log('[History] Starting certificates fetch');
       setLoading(true);
       
-      // Get authentication info
       const userToken = await AsyncStorage.getItem("userToken");
-      const userId = await AsyncStorage.getItem("userId");
+    
       
-      console.log('[History] UserId:', userId);
-      console.log('[History] Token available:', !!userToken);
-      
-      if (!userToken || !userId) {
+      if (!userToken) {
         throw new Error("You need to login to view certificates");
       }
       
       // Get certificates using the API function
-      const certificatesList = await getCertificates(userId, userToken);
+      const certificatesList = await getCertificates(userToken);
       
-      setCertificates(certificatesList);
+      // Lọc bỏ các chứng chỉ có status là "Pending"
+      const filteredCertificates = certificatesList.filter(cert => cert.status !== "Pending");
+      
+      setCertificates(filteredCertificates);
       
       // After getting certificates, fetch their course names
-      await fetchCourseNames(certificatesList);
+      await fetchCourseNames(filteredCertificates);
       
       setError(null);
     } catch (err) {

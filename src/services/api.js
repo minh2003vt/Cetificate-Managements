@@ -565,11 +565,10 @@ export const getUserAvatar = async (userId, token) => {
 };
 
 // Get certificates for user
-export const getCertificates = async (userId, token) => {
+export const getCertificates = async (token) => {
   try {
-    console.log('[API] Fetching certificates for user:', userId);
     
-    const response = await api.get(`/Certificate/trainee/view/${userId}`, {
+    const response = await api.get(`/Certificate/trainee/view`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
@@ -695,5 +694,61 @@ export const uploadGradeExcel = async (fileUri, token) => {
     } else {
       throw "Network error. Please check your connection and try again.";
     }
+  }
+};
+
+// Get all grades
+export const getAllGrades = async (token) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/Grade`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    const userId = await AsyncStorage.getItem('userId');
+    
+    // Kiểm tra data có phải là mảng không
+    if (response.data && Array.isArray(response.data)) {
+      // Nếu cần lọc theo instructor ID
+      if (userId) {
+        return response.data.filter(item => item.gradedByInstructorId === userId);
+      }
+      return response.data;  
+    }
+    
+    console.log("API response is not an array:", response.data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching grades:", error);
+    throw error;
+  }
+};
+
+// Update grade
+export const updateGrade = async (gradeData, token) => {
+  try {
+    console.log(`Sending PUT request to ${API_BASE_URL}/Grade/${gradeData.gradeId}`);
+    console.log("Request body:", JSON.stringify(gradeData));
+    
+    const response = await axios.put(`${API_BASE_URL}/Grade/${gradeData.gradeId}`, {
+      traineeAssignID: gradeData.traineeAssignID,
+      subjectId: gradeData.subjectId,
+      participantScore: gradeData.participantScore,
+      assignmentScore: gradeData.assignmentScore,
+      finalExamScore: gradeData.finalExamScore,
+      finalResitScore: gradeData.finalResitScore,
+      remarks: gradeData.remarks
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    console.log("Update grade response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("API Error - updateGrade:", error.response?.data || error.message);
+    throw error;
   }
 };

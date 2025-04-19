@@ -44,25 +44,14 @@ const Grade = ({ navigation }) => {
         if (!subjectId) continue;
         
         try {
-          console.log(`[Grade] Fetching details for subject ID: ${subjectId}`);
           const subjectData = await getSubject(subjectId, token);
-          console.log(`[Grade] Received subject data:`, JSON.stringify(subjectData));
           
-          // Cách xử lý giống CourseDetail.js - truy cập trực tiếp thuộc tính
           if (subjectData && subjectData.subjectName) {
-            console.log(`[Grade] Found subject name: ${subjectData.subjectName}`);
             subjectNamesMap[subjectId] = subjectData.subjectName;
-          } else if (subjectData && subjectData.description) {
-            // Fallback đến description nếu không có subjectName
-            console.log(`[Grade] Using description as fallback: ${subjectData.description}`);
-            subjectNamesMap[subjectId] = subjectData.description;
           } else {
-            // Nếu không có tên, sử dụng ID
-            console.log(`[Grade] No name found, using ID: ${subjectId}`);
             subjectNamesMap[subjectId] = `Subject ${subjectId}`;
           }
         } catch (err) {
-          console.error(`[Grade] Error fetching subject name for ID ${subjectId}:`, err);
           subjectNamesMap[subjectId] = `Subject ${subjectId}`;
         }
       }
