@@ -8,6 +8,14 @@ import ForgotPassword from './src/navigation/screens/auth/ForgotPassword';
 import ResetPassword from './src/navigation/screens/auth/ResetPassword';
 import Schedule from "./src/navigation/screens/home/Schedule";
 import { navigationRef } from "./src/utils/navigationService"; // Thêm dòng này
+import { LogBox } from 'react-native';
+
+// Bỏ qua tất cả cảnh báo về VirtualizedLists lồng nhau
+LogBox.ignoreLogs([
+  'VirtualizedLists should never be nested', 
+  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation',
+  'Possible Unhandled Promise Rejection'
+]);
 
 const Stack = createStackNavigator();
 

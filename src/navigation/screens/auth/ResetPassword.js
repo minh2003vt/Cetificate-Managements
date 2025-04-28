@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions, Alert, ImageBackground } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, useWindowDimensions, Alert } from "react-native";
 import { resetPassword } from "../../../services/api";
 import { BACKGROUND_HOMEPAGE,FLIGHT_VAULT_LOGO } from "../../../utils/assets";
 const ResetPassword = ({ route, navigation }) => {
@@ -70,10 +70,6 @@ const ResetPassword = ({ route, navigation }) => {
   };
 
   return (
-    <ImageBackground
-      source={BACKGROUND_HOMEPAGE}
-      style={styles.background}
-    >
       <View style={styles.container}>
         <Image
           source={FLIGHT_VAULT_LOGO}
@@ -138,7 +134,6 @@ const ResetPassword = ({ route, navigation }) => {
           <Text style={styles.backButtonText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
-    </ImageBackground>
   );
 };
 

@@ -59,12 +59,12 @@ const History = ({ navigation }) => {
 
   // Di chuyển hàm fetchCertificatesData ra khỏi useEffect
   const fetchCertificatesData = async () => {
-    try {
-      setLoading(true);
-      
-      const userToken = await AsyncStorage.getItem("userToken");
+      try {
+        setLoading(true);
+        
+        const userToken = await AsyncStorage.getItem("userToken");
     
-      
+        
       if (!userToken) {
         throw new Error("You need to login to view certificates");
       }
@@ -79,21 +79,21 @@ const History = ({ navigation }) => {
       
       // After getting certificates, fetch their course names
       await fetchCourseNames(filteredCertificates);
-      
-      setError(null);
-    } catch (err) {
+        
+        setError(null);
+      } catch (err) {
       console.error("[History] Error fetching certificates:", err);
       console.error("[History] Error details:", {
-        message: err.message,
-        name: err.name,
-        stack: err.stack
-      });
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        });
       setError("Unable to load certificates. Please try again later.");
-    } finally {
-      setLoading(false);
+      } finally {
+        setLoading(false);
       console.log('[History] Fetch complete');
-    }
-  };
+      }
+    };
 
   useEffect(() => {
     console.log('[History] Component mounted');

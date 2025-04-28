@@ -73,7 +73,7 @@ function TrainingPlanStack() {
 function HomeStack() {
   return (
     <Stack.Navigator>
-      <Stack.Screen
+            <Stack.Screen
         name="Home"
         component={Home}
         options={{ headerShown: false }}
@@ -169,18 +169,9 @@ const Main = () => {
           const parsedInfo = JSON.parse(userInfo);
           console.log('Parsed userInfo:', parsedInfo);
           
-          // Kiểm tra các trường có thể chứa vai trò
           if (parsedInfo.role) {
             console.log('Found role in parsedInfo.role:', parsedInfo.role);
             setUserRole(parsedInfo.role);
-          } else if (parsedInfo.userRole) {
-            console.log('Found role in parsedInfo.userRole:', parsedInfo.userRole);
-            setUserRole(parsedInfo.userRole);
-          } else if (parsedInfo.user && parsedInfo.user.role) {
-            console.log('Found role in parsedInfo.user.role:', parsedInfo.user.role);
-            setUserRole(parsedInfo.user.role);
-          } else {
-            console.log('No role found in userInfo');
           }
         } catch (parseError) {
           console.error('Error parsing userInfo:', parseError);
@@ -189,8 +180,9 @@ const Main = () => {
       
       // Thử lấy trực tiếp từ userRole key (nếu có)
       const directRole = await AsyncStorage.getItem('userRole');
+      console.log('Direct userRole from storage:', directRole);
       if (directRole) {
-        console.log('Found direct userRole:', directRole);
+        console.log('Setting userRole to:', directRole);
         setUserRole(directRole);
       }
       
@@ -205,7 +197,6 @@ const Main = () => {
   const updateTabVisibility = () => {
     const lowerRole = userRole.toLowerCase();
     const isInstructorRole = lowerRole.includes('instructor') || 
-                             lowerRole.includes('teacher') || 
                              lowerRole === 'trainer';
     
     console.log('Role lowercase:', lowerRole);
@@ -343,58 +334,58 @@ const Main = () => {
       />
       
       {showAllTabs && (
-        <Tab.Screen
-          name="TrainingPlan"
-          component={TrainingPlanStack}
-          options={({ route, navigation }) => ({
-            tabBarLabel: 'Training Plan',
-            tabBarIcon: ({ focused }) => (
-              <Image
-                source={require('../../assets/Course.png')}
-                style={{
-                  width: 24,
-                  height: 24,
-                  tintColor: '#FFFFFF'
-                }}
-              />
-            ),
-            tabBarItemStyle: {
-              flex: 1,
-              backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
-              marginHorizontal: 0,
-              borderRadius: 0,
-              paddingVertical: 8,
-              borderRightWidth: 1,
-              borderRightColor: '#2C3A4B',
-            }
-          })}
-        />
+      <Tab.Screen
+        name="TrainingPlan"
+        component={TrainingPlanStack}
+        options={({ route, navigation }) => ({
+          tabBarLabel: 'Training Plan',
+          tabBarIcon: ({ focused }) => (
+            <Image
+              source={require('../../assets/Course.png')}
+              style={{
+                width: 24,
+                height: 24,
+                tintColor: '#FFFFFF'
+              }}
+            />
+          ),
+          tabBarItemStyle: {
+            flex: 1,
+            backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
+            marginHorizontal: 0,
+            borderRadius: 0,
+            paddingVertical: 8,
+            borderRightWidth: 1,
+            borderRightColor: '#2C3A4B',
+          }
+        })}
+      />
       )}
       
       {showAllTabs && (
-        <Tab.Screen
-          name="History"
-          component={HistoryStack}
-          options={({ route, navigation }) => ({
-            tabBarLabel: 'History',
-            tabBarIcon: ({ focused }) => (
-              <FontAwesome
-                name="history"
-                size={24}
-                color="#FFFFFF"
-              />
-            ),
-            tabBarItemStyle: {
-              flex: 1,
-              backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
-              marginHorizontal: 0,
-              borderRadius: 0,
-              paddingVertical: 8,
-              borderRightWidth: 1,
-              borderRightColor: '#2C3A4B',
-            }
-          })}
-        />
+      <Tab.Screen
+        name="History"
+        component={HistoryStack}
+        options={({ route, navigation }) => ({
+          tabBarLabel: 'History',
+          tabBarIcon: ({ focused }) => (
+            <FontAwesome
+              name="history"
+              size={24}
+              color="#FFFFFF"
+            />
+          ),
+          tabBarItemStyle: {
+            flex: 1,
+            backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
+            marginHorizontal: 0,
+            borderRadius: 0,
+            paddingVertical: 8,
+            borderRightWidth: 1,
+            borderRightColor: '#2C3A4B',
+          }
+        })}
+      />
       )}
       
       <Tab.Screen

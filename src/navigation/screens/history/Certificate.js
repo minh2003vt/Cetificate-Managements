@@ -251,13 +251,13 @@ const Certificate = () => {
     let errorMessage = `Lỗi tải chứng chỉ (${nativeEvent.code}): ${nativeEvent.description}`;
     
     if (nativeEvent.code === -1009) {
-      errorMessage = "Không thể kết nối internet. Vui lòng kiểm tra kết nối và thử lại.";
+      errorMessage = "Cannot connect to internet. Please check your connection and try again.";
     } else if (nativeEvent.code === -1001) {
-      errorMessage = "Thời gian tải trang quá lâu. Vui lòng thử lại sau.";
+      errorMessage = "Page loading timeout. Please try again later.";
     } else if (nativeEvent.code === 404) {
-      errorMessage = "Không tìm thấy tài liệu chứng chỉ. Vui lòng liên hệ quản trị viên.";
+      errorMessage = "Certificate document not found. Please contact administrator.";
     } else if (nativeEvent.code === 403) {
-      errorMessage = "Không có quyền truy cập tài liệu này. Đường dẫn chứng chỉ có thể đã hết hạn.";
+      errorMessage = "You do not have permission to access this document. The certificate link may have expired.";
     }
     
     setError(errorMessage);
@@ -348,7 +348,7 @@ const Certificate = () => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={styles.loadingText}>Đang tải chứng chỉ...</Text>
+          <Text style={styles.loadingText}>Loading certificate...</Text>
         </View>
       );
     }
@@ -361,7 +361,7 @@ const Certificate = () => {
             style={[styles.exportButton, { marginTop: 20 }]}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.exportText}>Quay lại</Text>
+            <Text style={styles.exportText}>Back</Text>
           </TouchableOpacity>
         </View>
       );
@@ -412,7 +412,7 @@ const Certificate = () => {
               onPress={downloadCertificateFile} // Sử dụng phương thức mới
             >
               <Ionicons name="download-outline" size={20} color="#FFF" />
-              <Text style={styles.buttonText}>Xuất</Text>
+              <Text style={styles.buttonText}>Export</Text>
             </TouchableOpacity>
 
           </View>
@@ -424,7 +424,7 @@ const Certificate = () => {
               onPress={handleRetryLoad}
             >
               <FontAwesome name="refresh" size={20} color="#fff" />
-              <Text style={styles.exportText}>Thử lại</Text>
+              <Text style={styles.exportText}>Try Again</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -530,7 +530,7 @@ const Certificate = () => {
               {loading && (
                 <View style={styles.loadingOverlay}>
                   <ActivityIndicator size="large" color="#1D72F3" />
-                  <Text style={styles.loadingText}>Đang tải chứng chỉ...</Text>
+                  <Text style={styles.loadingText}>Loading certificate...</Text>
                 </View>
               )}
             </View>
@@ -541,7 +541,7 @@ const Certificate = () => {
                 onPress={downloadCertificateFile} // Sử dụng phương thức mới
               >
                 <Ionicons name="download-outline" size={20} color="#FFF" />
-                <Text style={styles.buttonText}>Xuất</Text>
+                <Text style={styles.buttonText}>Export</Text>
               </TouchableOpacity>
 
             </View>
@@ -549,7 +549,7 @@ const Certificate = () => {
         ) : (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#1D72F3" />
-            <Text style={styles.loadingText}>Đang tải dữ liệu chứng chỉ...</Text>
+            <Text style={styles.loadingText}>loading certificate...</Text>
           </View>
         )}
       </View>
@@ -636,6 +636,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   contentContainer: {
+    marginTop: 20,
     flex: 1,
     width: "100%",
     alignItems: "center",
@@ -803,6 +804,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 10,
   },
   button: {
     flexDirection: "row",

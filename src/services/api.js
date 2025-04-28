@@ -2,6 +2,7 @@ import axios from "axios";
 import { navigate } from "../utils/navigationService"; // Import hàm điều hướng nếu có
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { Alert } from "react-native";
 
 const API_BASE_URL = "https://ocms-bea4aagveeejawff.southeastasia-01.azurewebsites.net/api/";
 
@@ -12,22 +13,26 @@ const api = axios.create({
   },
 });
 
-// Interceptor để kiểm tra lỗi 401 (Token hết hạn)
+// Interceptor để kiểm tra lỗi 401 (Token hết hạn) và kiểm tra trạng thái tài khoản
 api.interceptors.response.use(
-    (response) => response, // Trả về response nếu không có lỗi
-    (error) => {
-      if (error.response && error.response.status === 401) {
-        const originalRequest = error.config;
-  
-        // Kiểm tra xem request có chứa Authorization không -> nghĩa là lỗi xảy ra sau khi đăng nhập
-        if (originalRequest.headers.Authorization) {
-          alert("Token has expired, please log in again."); // Hiển thị thông báo lỗi bằng tiếng Anh
-          navigate("Login"); // Điều hướng về màn hình đăng nhập
-        }
+  (response) => {
+    // Xóa bỏ kiểm tra trạng thái tài khoản và cảnh báo tại đây
+    // để tránh hiển thị nhiều lần cảnh báo
+    return response; // Trả về response nếu không có lỗi
+  }, 
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const originalRequest = error.config;
+
+      // Kiểm tra xem request có chứa Authorization không -> nghĩa là lỗi xảy ra sau khi đăng nhập
+      if (originalRequest.headers.Authorization) {
+        Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+        navigate("Login"); // Điều hướng về màn hình đăng nhập
       }
-      return Promise.reject(error);
     }
-  );
+    return Promise.reject(error);
+  }
+);
   
 // Login function
 export const loginUser = async (UserName, password) => {
@@ -139,11 +144,34 @@ export const getUserProfile = async (userId, token) => {
       gender: userData.gender || "Male",
       dateOfBirth: userData.dateOfBirth || new Date().toISOString(),
       role: userData.roleName || "",
-      avatarUrlWithSas: userData.avatarUrlWithSas || null
+      avatarUrlWithSas: userData.avatarUrlWithSas || null,
+      accountStatus: userData.accountStatus || "Active"
     };
   } catch (error) {
     console.error('Get Profile Error:', error.response?.data || error.message);
     throw error.response ? error.response.data : "Network error";
+  }
+};
+
+// Check account status
+export const checkAccountStatus = async (token) => {
+  try {
+    const response = await api.get(`/User/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const userData = response.data?.user || {};
+    const accountStatus = userData.accountStatus || "Unknown";
+
+    return {
+      isActive: accountStatus === "Active",
+      status: accountStatus
+    };
+  } catch (error) {
+    console.error('Check Account Status Error:', error.response?.data || error.message);
+    return { isActive: false, status: "Error", error: error.message };
   }
 };
 

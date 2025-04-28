@@ -11,10 +11,11 @@ import {
   ScrollView,
   Platform,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  Alert
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUser, getUserProfile } from "../../../services/api";
+import { loginUser, getUserProfile, checkAccountStatus } from "../../../services/api";
 import { FontAwesome } from '@expo/vector-icons';
 import { BACKGROUND_HOMEPAGE,FLIGHT_VAULT_LOGO } from "../../../utils/assets";
 const Login = ({ navigation }) => {
@@ -36,7 +37,6 @@ const Login = ({ navigation }) => {
       setErrorMessage("");
       
       const loginData = await loginUser(username, password);
-      console.log("Login Response:", loginData);
 
       // Kiểm tra xem loginData có phải là undefined, null hoặc không có token
       if (!loginData || !loginData.token) {
@@ -67,52 +67,39 @@ const Login = ({ navigation }) => {
 
       // Lấy thông tin user từ API
       const userData = await getUserProfile(loginData.userID, loginData.token);
-      console.log("User Profile Data:", userData);
       
       if (userData) {
         // Tạo đối tượng thông tin người dùng đầy đủ
-        const userInfo = {
-          userId: loginData.userID,
-          token: loginData.token,
-          fullName: userData.fullName || "",
-          email: userData.email || "",
-          phoneNumber: userData.phoneNumber || "",
-          address: userData.address || "",
-          gender: userData.gender || "",
-          dateOfBirth: userData.dateOfBirth || "",
-          avatarUrlWithSas: userData.avatarUrlWithSas || null,
-          role: userData.role || userRoleDetermined || "Unknown"
-        };
-        
-        // Lưu thông tin người dùng dưới dạng JSON
-        await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
-        console.log("Saved userInfo to AsyncStorage:", userInfo);
-        
+       
         // Vẫn giữ các mục riêng lẻ cho khả năng tương thích ngược
         await AsyncStorage.setItem("userFullName", userData.fullName || "");
-        await AsyncStorage.setItem("userEmail", userData.email || "");
-        await AsyncStorage.setItem("userPhone", userData.phoneNumber || "");
-        await AsyncStorage.setItem("userAddress", userData.address || "");
-        await AsyncStorage.setItem("userGender", userData.gender || "");
-        await AsyncStorage.setItem("userDateOfBirth", userData.dateOfBirth || "");
         
         // Lưu avatar URL nếu có
         if (userData.avatarUrlWithSas) {
-          console.log("Avatar URL found in profile after login:", userData.avatarUrlWithSas.substring(0, 50) + "...");
           await AsyncStorage.setItem("userAvatar", userData.avatarUrlWithSas);
-        } else {
-          console.log("No avatar URL in profile after login");
-        }
+        } 
         
-        // Lưu vai trò người dùng từ userData nếu có (ưu tiên hơn từ loginData)
-        if (userData.role) {
-          await AsyncStorage.setItem("userRole", userData.role);
-        }
       }
 
+      // Kiểm tra trạng thái tài khoản trước khi chuyển hướng
+      const accountStatusCheck = await checkAccountStatus(loginData.token);
+      
+      if (!accountStatusCheck.isActive) {
+        // Hiển thị thông báo và không chuyển hướng
+        Alert.alert(
+          'Your account is deactivated',
+          'Please contact the administrator.',
+          [{ text: 'OK' }]
+        );
+        
+        // Xóa dữ liệu đăng nhập
+        await AsyncStorage.clear();
+        setLoading(false);
+        return;
+      }
+      
       navigation.replace("Main");
     } catch (error) {
-      console.error("Login Error:", error);
       if (typeof error === 'string') {
         setErrorMessage(error);
       } else if (error.message) {

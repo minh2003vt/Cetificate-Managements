@@ -2,14 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { 
   View, Text, TextInput, FlatList, Image, 
-  TouchableOpacity, StyleSheet, ImageBackground, ScrollView, ActivityIndicator, useWindowDimensions, Alert,
-  Dimensions
+  TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, useWindowDimensions, Alert,
+  Dimensions, Platform, LogBox
 } from "react-native";
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getNotifications, getUnreadCount } from "../../../services/api";
 import { EventRegister } from "react-native-event-listeners";
 import { BACKGROUND_HOMEPAGE, DEFAULT_AVATAR } from "../../../utils/assets";
+import { verifyAccountStatus } from "../../../utils/accountStatus";
+
+// Bỏ qua cảnh báo về VirtualizedList lồng nhau
+LogBox.ignoreLogs([
+  'VirtualizedLists should never be nested', 
+  'VirtualizedLists should never be nested inside plain ScrollViews with the same orientation because it can break windowing and other functionality - use another VirtualizedList-backed container instead. [Component Stack]'
+]);
 
 const { width: screenWidth } = Dimensions.get('window');
 const aspectRatio = 430 / 346; // height / width
@@ -84,6 +91,10 @@ const Home = () => {
 
   const loadUserData = async () => {
     try {
+      // Kiểm tra trạng thái tài khoản trước khi tải dữ liệu
+      const isActive = await verifyAccountStatus();
+      if (!isActive) return;
+
       const fullName = await AsyncStorage.getItem("userFullName");
       const userID = await AsyncStorage.getItem("userId");
       const avatarUrl = await AsyncStorage.getItem("userAvatar");
@@ -131,7 +142,10 @@ const Home = () => {
       () => {
         // Khi có thông báo được đọc, cập nhật lại danh sách thông báo
         if (userId) {
-          fetchNotifications(userId);
+          // Kiểm tra trạng thái tài khoản trước khi tải thông báo
+          verifyAccountStatus(() => {
+            fetchNotifications(userId);
+          });
         }
       }
     );
@@ -144,7 +158,10 @@ const Home = () => {
         setUnreadCount(data.unreadCount || 0);
         // Tải lại thông báo nếu cần
         if (userId) {
-          fetchNotifications(userId);
+          // Kiểm tra trạng thái tài khoản trước khi tải thông báo
+          verifyAccountStatus(() => {
+            fetchNotifications(userId);
+          });
         }
       }
     );
@@ -154,7 +171,10 @@ const Home = () => {
       () => {
         // Khi có thông báo mới, cập nhật lại danh sách
         if (userId) {
-          fetchNotifications(userId);
+          // Kiểm tra trạng thái tài khoản trước khi tải thông báo
+          verifyAccountStatus(() => {
+            fetchNotifications(userId);
+          });
         }
       }
     );
@@ -178,6 +198,10 @@ const Home = () => {
   
   const fetchNotifications = async (userID) => {
     try {
+      // Kiểm tra trạng thái tài khoản trước khi tải thông báo
+      const isActive = await verifyAccountStatus();
+      if (!isActive) return;
+
       const token = await AsyncStorage.getItem("userToken");
       if (!token || !userID) {
         console.log("Token or UserID not available");
@@ -268,8 +292,10 @@ const Home = () => {
   // Thêm useFocusEffect để tải lại dữ liệu khi màn hình được focus
   useFocusEffect(
     React.useCallback(() => {
-      // Tải lại dữ liệu người dùng (bao gồm avatar) khi màn hình được focus
-      loadUserData();
+      // Kiểm tra trạng thái tài khoản trước khi tải dữ liệu
+      verifyAccountStatus(() => {
+        loadUserData();
+      });
       return () => {
         // Cleanup nếu cần
       };
@@ -278,130 +304,101 @@ const Home = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1D72F3" />
+      <View style={styles.container}>
+        <Image source={BACKGROUND_HOMEPAGE} style={styles.backgroundImage} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1D72F3" />
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <ImageBackground 
-        source={BACKGROUND_HOMEPAGE} 
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer} 
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.contentWrapper}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.greeting}>Hello,</Text>
-                <Text style={styles.username}>{userFullName}</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-                <Image 
-                  source={userAvatar ? { uri: userAvatar } : DEFAULT_AVATAR}
-                  style={styles.avatar} 
-                />
+      <Image source={BACKGROUND_HOMEPAGE} style={styles.backgroundImage} />
+      <View style={styles.header}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.greeting}>Hello,</Text>
+          <Text style={styles.username}>{userFullName}</Text>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <Image 
+            source={userAvatar ? { uri: userAvatar } : DEFAULT_AVATAR}
+            style={styles.avatar} 
+          />
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.contentContainer}>
+        <View style={styles.contentWrapper}>
+          {/* Các ô chức năng */}
+          <View style={styles.gridContainer}>
+            {[
+              { title: "Schedule", icon: "calendar", navigateTo: "Schedule" },
+              { title: "Notification", icon: "bell", navigateTo: "Notifications", badge: unreadCount > 0 },
+              { 
+                title: isInstructor ? "Import Score" : "History", 
+                icon: isInstructor ? "file-excel-o" : "history", 
+                navigateTo: isInstructor ? "ImportScore" : "History" 
+              },
+              { 
+                title: "Grade", 
+                icon: "graduation-cap", 
+                navigateTo: isInstructor ? "ViewGrade" : "Grade" 
+              },
+            ].map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.gridItem}
+                onPress={() => navigation.navigate(item.navigateTo)}
+              >
+                <View style={styles.iconContainer}>
+                  <FontAwesome name={item.icon} size={50} color="white" />
+                  {item.badge && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{unreadCount}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.gridText}>{item.title}</Text>
               </TouchableOpacity>
-            </View>
+            ))}
+          </View>
 
-            {/* Thanh tìm kiếm */}
-            <View style={styles.searchContainer}>
-              <TextInput 
-                style={styles.searchInput} 
-                placeholder="Search grades..." 
-                value={search}
-                onChangeText={setSearch}
-              />
-              <TouchableOpacity style={styles.dropdownButton}>
-                <MaterialIcons name="arrow-drop-down" size={24} color="black" />
-              </TouchableOpacity>
-            </View>
+          {/* Danh sách thông báo */}
+          <View style={styles.notificationHeader}>
+            <Text style={styles.notificationTitle}>
+              Notifications {unreadCount > 0 ? `(${unreadCount})` : `(${notifications.length})`}
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
+              <MaterialIcons name="chevron-right" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Các ô chức năng */}
-            <View style={styles.gridContainer}>
-              {[
-                { title: "Schedule", icon: "calendar", navigateTo: "Schedule" },
-                { title: "Notification", icon: "bell", navigateTo: "Notifications", badge: unreadCount > 0 },
-                { 
-                  title: isInstructor ? "Import Score" : "History", 
-                  icon: isInstructor ? "file-excel-o" : "history", 
-                  navigateTo: isInstructor ? "ImportScore" : "History" 
-                },
-                { 
-                  title: "Grade", 
-                  icon: "graduation-cap", 
-                  navigateTo: isInstructor ? "ViewGrade" : "Grade" 
-                },
-              ].map((item, index) => (
+          {notifications.length > 0 ? (
+            <View style={styles.notificationList}>
+              {notifications.map(item => (
                 <TouchableOpacity
-                  key={index}
-                  style={styles.gridItem}
-                  onPress={() => navigation.navigate(item.navigateTo)}
+                  key={item.id.toString()}
+                  style={styles.notificationCard}
+                  onPress={() => navigation.navigate("Notifications")}
                 >
-                  <View style={styles.iconContainer}>
-                    <FontAwesome name={item.icon} size={50} color="white" />
-                    {item.badge && (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{unreadCount}</Text>
-                      </View>
-                    )}
+                  {!item.isRead && <View style={styles.redDotIndicator} />}
+                  <View style={styles.notificationInner}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={styles.cardDate}>{item.date}</Text>
+                    <Text style={styles.cardContent}>{item.content}</Text>
                   </View>
-                  <Text style={styles.gridText}>{item.title}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-
-            {/* Danh sách thông báo */}
-            <View style={styles.notificationHeader}>
-              <Text style={styles.notificationTitle}>
-                Notifications {unreadCount > 0 ? `(${unreadCount})` : `(${notifications.length})`}
-              </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
-                <MaterialIcons name="chevron-right" size={24} color="black" />
-              </TouchableOpacity>
+          ) : (
+            <View style={styles.emptyNotifications}>
+              <Text style={styles.emptyText}>No notifications yet</Text>
             </View>
-
-            {notifications.length > 0 ? (
-              <View style={{maxHeight: height * 0.28}}>
-                <FlatList
-                  data={notifications}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.notificationCard,
-                        !item.isRead && styles.unreadNotification
-                      ]}
-                      onPress={() => navigation.navigate("Notifications")}
-                    >
-                      <View style={styles.cardContent}>
-                        <View style={styles.titleContainer}>
-                          <Text style={styles.notificationCardTitle} numberOfLines={1} ellipsizeMode="tail">
-                            {item.title}
-                          </Text>
-                          {!item.isRead && <View style={styles.unreadDot} />}
-                        </View>
-                        <Text style={styles.notificationDate}>{item.date}</Text>
-                        <Text style={styles.notificationContent} numberOfLines={2} ellipsizeMode="tail">{item.content}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            ) : (
-              <View style={styles.emptyNotifications}>
-                <Text style={styles.emptyText}>No notifications yet</Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-      </ImageBackground>
+          )}
+        </View>
+      </View>
     </View>
   );
 };
@@ -409,32 +406,60 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "transparent",
   },
-  background: {
+  backgroundImage: {
+    width: "100%",
+    height: screenWidth / aspectRatio,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    resizeMode: "cover",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 20,
+  },
+  headerContainer: {
+    flexDirection: "column",
+  },
+  greeting: { 
+    fontSize: 18, 
+    color: "white" 
+  },
+  username: { 
+    fontSize: 30, 
+    fontWeight: "bold", 
+    color: "white" 
+  },
+  avatar: { 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25 
+  },
+  contentContainer: {
     flex: 1,
-    width: '100%',
-  },
-  scrollContainer: {
-    flexGrow: 1,
+    paddingHorizontal: 20,
   },
   contentWrapper: {
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 20,
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "space-between", 
-    marginBottom: 10 
-  },
-  greeting: { fontSize: 18, fontWeight: "300", color: "#fff" },
-  username: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-  avatar: { width: 50, height: 50, borderRadius: 25 },
   searchContainer: { 
     flexDirection: "row", 
     backgroundColor: "white", 
@@ -491,65 +516,63 @@ const styles = StyleSheet.create({
     alignItems: "center", 
     marginBottom: 10 
   },
-  notificationTitle: { fontSize: 18, fontWeight: "bold" },
+  notificationTitle: { 
+    fontSize: 18, 
+    fontWeight: "bold" 
+  },
+  notificationList: {
+    maxHeight: Dimensions.get('window').height * 0.25,
+  },
   notificationCard: { 
-    backgroundColor: "#43546A", 
-    borderRadius: 10, 
-    padding: 15, 
+    backgroundColor: "white", 
+    borderRadius: 10,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    overflow: 'hidden',
     position: 'relative',
-    borderWidth: 2,
-    borderColor: "black",
   },
-  unreadNotification: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#1D72F3',
+  redDotIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF4444',
-    marginLeft: 5,
+  notificationInner: {
+    padding: 12,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  cardDate: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
   },
   cardContent: {
-    flex: 1,
-    width: '100%',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-    width: '100%',
-  },
-  notificationCardTitle: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    color: "white",
-    flex: 1,
-    marginRight: 10,
-  },
-  notificationDate: { 
-    fontSize: 12, 
-    color: "#DDD", 
-    marginBottom: 5 
-  },
-  notificationContent: { 
-    fontSize: 14, 
-    color: "#EEE" 
+    fontSize: 14,
+    color: '#333333',
+    marginBottom: 2,
   },
   emptyNotifications: {
-    backgroundColor: "#43546A",
-    borderWidth: 2,
-    borderColor: "black",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#ddd",
     borderRadius: 10,
     padding: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
   },
   emptyText: {
-    color: "#EEE",
+    color: "#777",
     fontSize: 16,
     fontStyle: 'italic',
   },

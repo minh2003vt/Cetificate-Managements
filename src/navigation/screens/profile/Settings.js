@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions, ImageBackground, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../../../context/ThemeContext';
-import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK , DEFAULT_AVATAR } from '../../../utils/assets';
+import {DEFAULT_AVATAR } from '../../../utils/assets';
 
 export default function Settings() {
   const navigation = useNavigation(); // Hook để điều hướng
@@ -85,11 +85,7 @@ export default function Settings() {
   };
 
   return (
-    <ImageBackground 
-      source={BACKGROUND_HOMEPAGE} 
-      style={styles.background}
-      resizeMode="cover"
-    >
+
       <ScrollView 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
@@ -151,7 +147,6 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </ImageBackground>
   );
 }
 

@@ -613,6 +613,8 @@ const Schedule = ({ navigation }) => {
             marginVertical: 5,
             backgroundColor: '#F8F9FA',
             borderRadius: 8,
+            marginBottom: 10,
+            marginTop: 10,
         },
         timeInfoColumn: {
             width: 45,
@@ -623,13 +625,13 @@ const Schedule = ({ navigation }) => {
         timeText: {
             fontSize: 12,
             fontWeight: 'bold',
-            color: '#555',
+            color: '#43546A',
             marginBottom: 3,
         },
         timeLine: {
             width: 1,
             height: 12,
-            backgroundColor: '#999',
+            backgroundColor: '#43546A',
             marginVertical: 2,
         },
         // Event Details
@@ -640,7 +642,7 @@ const Schedule = ({ navigation }) => {
         subjectNameText: {
             fontSize: 15,
             fontWeight: 'bold',
-            color: '#333',
+            color: '#43546A',
             marginBottom: 3,
         },
         eventInfoContainer: {
@@ -649,7 +651,7 @@ const Schedule = ({ navigation }) => {
         },
         roomText: {
             fontSize: 13,
-            color: '#555',
+            color: '#43546A',
             marginBottom: 3,
         },
         subjectCodeText: {

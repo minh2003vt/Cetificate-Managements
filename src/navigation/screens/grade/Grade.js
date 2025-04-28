@@ -182,30 +182,30 @@ const Grade = ({ navigation }) => {
               <View style={styles.separator} />
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Participant:</Text>
-                <Text style={styles.detailValue}>{selectedGrade.participantScore || "N/A"}</Text>
+                <Text style={styles.detailValue}>{selectedGrade.participantScore ? parseFloat(selectedGrade.participantScore).toFixed(2) : "N/A"}</Text>
               </View>
 
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Assignment:</Text>
-                <Text style={styles.detailValue}>{selectedGrade.assignmentScore || "N/A"}</Text>
+                <Text style={styles.detailValue}>{selectedGrade.assignmentScore ? parseFloat(selectedGrade.assignmentScore).toFixed(2) : "N/A"}</Text>
               </View>
               
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Final Exam:</Text>
-                <Text style={styles.detailValue}>{selectedGrade.finalExamScore || "N/A"}</Text>
+                <Text style={styles.detailValue}>{selectedGrade.finalExamScore ? parseFloat(selectedGrade.finalExamScore).toFixed(2) : "N/A"}</Text>
               </View>
               
               {selectedGrade.finalResitScore !== null && (
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Resit:</Text>
-                  <Text style={styles.detailValue}>{selectedGrade.finalResitScore || "N/A"}</Text>
+                  <Text style={styles.detailValue}>{selectedGrade.finalResitScore ? parseFloat(selectedGrade.finalResitScore).toFixed(2) : "N/A"}</Text>
                 </View>
               )}
               
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Final Score:</Text>
                 <Text style={[styles.detailValue, styles.totalScore]}>
-                  {selectedGrade.totalScore || "N/A"}
+                  {selectedGrade.totalScore ? parseFloat(selectedGrade.totalScore).toFixed(2) : "N/A"}
                 </Text>
               </View>
               
@@ -245,7 +245,7 @@ const Grade = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Điểm số</Text>
+          <Text style={styles.headerTitle}>Score</Text>
         </View>
 
         {/* Danh sách điểm số */}
@@ -253,7 +253,7 @@ const Grade = ({ navigation }) => {
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#1D72F3" />
-              <Text style={styles.loadingText}>Đang tải điểm số...</Text>
+              <Text style={styles.loadingText}>Loading grades...</Text>
             </View>
           ) : error ? (
             <View style={styles.errorContainer}>
@@ -266,13 +266,13 @@ const Grade = ({ navigation }) => {
                   fetchGradesData();
                 }}
               >
-                <Text style={styles.retryButtonText}>Thử lại</Text>
+                <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             </View>
           ) : grades.length === 0 ? (
             <View style={styles.emptyContainer}>
               <FontAwesome name="graduation-cap" size={50} color="#B8C4D1" />
-              <Text style={styles.emptyText}>Bạn chưa có điểm số nào</Text>
+              <Text style={styles.emptyText}>You have no grades yet</Text>
             </View>
           ) : (
             <FlatList

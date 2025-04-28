@@ -667,8 +667,7 @@ const Profile = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <View style={[styles.header, { backgroundColor: '#transparent' }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={{ color: theme.textUpper }}>
-            <FontAwesome name="arrow-left" size={24} style={{ color: theme.textUpper }}/>
-          </TouchableOpacity>
+            </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.textUpper }]}>Profile</Text>
           {activeTab === 'profile' && (
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={{ color: theme.textUpper }}>

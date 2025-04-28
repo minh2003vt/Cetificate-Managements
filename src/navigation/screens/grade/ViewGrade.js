@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Alert,
   Share,
-  Platform,
   Modal,
   ScrollView,
   TextInput,
@@ -177,12 +176,12 @@ const ViewGrade = ({ navigation }) => {
       // Sử dụng tên môn học nếu có, nếu không thì dùng subjectId
       const subjectName = subjectNames[array[i].subjectId] || array[i].subjectId || 'N/A';
       line += subjectName + ',';
-      line += (array[i].participantScore || '0') + ',';
-      line += (array[i].assignmentScore || '0') + ',';
-      line += (array[i].finalExamScore || '0') + ',';
-      line += (array[i].finalResitScore || '0') + ',';
-      line += (array[i].totalScore || '0') + ',';
-      line += (array[i].gradeStatus || 'N/A');
+      line += parseFloat(array[i].participantScore || 0).toFixed(2) + ',';
+      line += parseFloat(array[i].assignmentScore || 0).toFixed(2) + ',';
+      line += parseFloat(array[i].finalExamScore || 0).toFixed(2) + ',';
+      line += parseFloat(array[i].finalResitScore || 0).toFixed(2) + ',';
+      line += parseFloat(array[i].totalScore || 0).toFixed(2) + ',';
+          line += (array[i].gradeStatus || 'N/A');
       str += line + '\r\n';
     }
     return str;
@@ -190,7 +189,7 @@ const ViewGrade = ({ navigation }) => {
 
   const exportToExcel = async () => {
     if (filteredGrades.length === 0) {
-      Alert.alert('Không có dữ liệu', 'Không có dữ liệu để xuất.');
+      Alert.alert('No data', 'No data to export.');
       return;
     }
 
@@ -231,10 +230,10 @@ const ViewGrade = ({ navigation }) => {
       gradeId : grade.gradeId || "",
       traineeAssignID: grade.traineeAssignID || "",
       subjectId: grade.subjectId || "",
-      participantScore: grade.participantScore?.toString() || '',
-      assignmentScore: grade.assignmentScore?.toString() || '',
-      finalExamScore: grade.finalExamScore?.toString() || '',
-      finalResitScore: grade.finalResitScore?.toString() || '',
+      participantScore: grade.participantScore ? parseFloat(grade.participantScore).toFixed(2) : '',
+      assignmentScore: grade.assignmentScore ? parseFloat(grade.assignmentScore).toFixed(2) : '',
+      finalExamScore: grade.finalExamScore ? parseFloat(grade.finalExamScore).toFixed(2) : '',
+      finalResitScore: grade.finalResitScore ? parseFloat(grade.finalResitScore).toFixed(2) : '',
       remarks: grade.remarks || ''
     });
     setModalVisible(true);
@@ -351,11 +350,11 @@ const ViewGrade = ({ navigation }) => {
       <Text style={[styles.tableCell, styles.subjectCell]}>
         {item.fullname || "N/A"}
       </Text>
-      <Text style={[styles.tableCell, styles.scoreCell]}>{item.participantScore || "0"}</Text>
-      <Text style={[styles.tableCell, styles.scoreCell]}>{item.assignmentScore || "0"}</Text>
-      <Text style={[styles.tableCell, styles.scoreCell]}>{item.finalExamScore || "0"}</Text>
-      <Text style={[styles.tableCell, styles.scoreCell]}>{item.finalResitScore || "0"}</Text>
-      <Text style={[styles.tableCell, styles.totalCell]}>{item.totalScore || "0"}</Text>
+      <Text style={[styles.tableCell, styles.scoreCell]}>{parseFloat(item.participantScore || 0).toFixed(1)}</Text>
+      <Text style={[styles.tableCell, styles.scoreCell]}>{parseFloat(item.assignmentScore || 0).toFixed(1)}</Text>
+      <Text style={[styles.tableCell, styles.scoreCell]}>{parseFloat(item.finalExamScore || 0).toFixed(1)}</Text>
+      <Text style={[styles.tableCell, styles.scoreCell]}>{parseFloat(item.finalResitScore || 0).toFixed(1)}</Text>
+      <Text style={[styles.tableCell, styles.totalCell]}>{parseFloat(item.totalScore || 0).toFixed(1)}</Text>
       <Text style={[styles.tableCell, styles.statusCell, 
         { color: item.gradeStatus === "Pass" ? "#4CAF50" : "#F44336" }]}>
         {item.gradeStatus || "N/A"}
@@ -378,9 +377,9 @@ const ViewGrade = ({ navigation }) => {
 
   const getFilterButtonText = () => {
     if (!selectedSubject) {
-      return 'Chọn môn học';
+      return 'Select Subject';
     }
-    return `Môn: ${subjectNames[selectedSubject] || selectedSubject}`;
+    return `Subject: ${subjectNames[selectedSubject] || selectedSubject}`;
   };
 
   const renderSubjectModal = () => (
@@ -511,7 +510,7 @@ const ViewGrade = ({ navigation }) => {
                 ) : (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <FontAwesome name="file-excel-o" size={20} color="white" />
-                    <Text style={styles.exportButtonText}>Xuất CSV</Text>
+                    <Text style={styles.exportButtonText}>Export CSV</Text>
                   </View>
                 )}
               </TouchableOpacity>
