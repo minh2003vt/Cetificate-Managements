@@ -38,12 +38,7 @@ const TrainingPlan = ({ navigation }) => {
         throw new Error('No token found');
       }
 
-      console.log('Fetching training plans with token:', token ? 'Token exists' : 'No token');
-      const response = await getTrainingPlanUser(token);
-      
-      console.log('TrainingPlan.js - Raw response received:', typeof response);
-      console.log('TrainingPlan.js - Response structure:', JSON.stringify(response, null, 2));
-      
+      const response = await getTrainingPlanUser(token);      
       // Check if response contains the specific message for no joined plans
       if (response && response.message === 'No training plan joined.') {
         console.log('No training plans joined message received');
@@ -79,11 +74,9 @@ const TrainingPlan = ({ navigation }) => {
       
       if (Array.isArray(plansData) && plansData.length > 0) {
         // Lọc chỉ những kế hoạch đào tạo có trạng thái "Approved"
-        const approvedPlans = plansData.filter(plan => plan.trainingPlanStatus === 'Approved');
-        console.log('Filtered approved plans count:', approvedPlans.length);
+        const approvedPlans = plansData.filter(plan => plan.trainingPlanStatus !== 'Draft');
         
         const processedPlans = processTrainingPlans(approvedPlans);
-        console.log('Processed plans count:', processedPlans.length);
         setTrainingPlans(processedPlans);
       } else {
         console.warn('No training plans found in response');
@@ -108,34 +101,32 @@ const TrainingPlan = ({ navigation }) => {
       const startDate = new Date(plan.startDate);
       const endDate = new Date(plan.endDate);
       const currentDate = new Date();
-      
-      console.log(`Processing plan: ${plan.planName}`);
-      console.log(`Start date: ${startDate.toISOString()}, End date: ${endDate.toISOString()}`);
-      console.log(`Current date: ${currentDate.toISOString()}`);
-      
+    
       let status;
       let displayDate;
       let iconName;
       let iconColor;
       
-      if (currentDate < startDate) {
+      if (plan.trainingPlanStatus === 'Completed') {
+        status = "Completed";
+        displayDate = `Completed at: ${formatDate(endDate)}`;
+        iconName = "check-circle";
+        iconColor = "#4CAF50"; // Green
+      } else if (currentDate < startDate) {
         status = "Not yet";
         displayDate = `Start at: ${formatDate(startDate)}`;
         iconName = "clock-o";
         iconColor = "#FFD700"; // Gold
-        console.log(`Plan ${plan.planName} status: Not yet started`);
       } else if (currentDate > endDate) {
         status = "Completed";
         displayDate = `Completed at: ${formatDate(endDate)}`;
         iconName = "check-circle";
         iconColor = "#4CAF50"; // Green
-        console.log(`Plan ${plan.planName} status: Completed`);
       } else {
         status = "Ongoing";
         displayDate = `In progress`;
         iconName = "play-circle";
         iconColor = "#FFFFFF"; // White
-        console.log(`Plan ${plan.planName} status: Ongoing`);
       }
       
       // Luôn trả về kế hoạch, không lọc dựa trên trạng thái

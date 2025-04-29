@@ -15,7 +15,6 @@ import { useTheme } from '../../../context/ThemeContext';
 import { getSchedule, getUserById } from '../../../services/api';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isWithinInterval, addMinutes, addHours } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { BACKGROUND_HOMEPAGE, BACKGROUND_DARK } from '../../../utils/assets';
 // Helper function to check if a date has events
 const hasEvents = (dateKey, data) => {
@@ -24,41 +23,30 @@ const hasEvents = (dateKey, data) => {
 };
 
 const formatScheduleData = async (apiData, token) => {
-    const formattedData = {};
-    console.log('Formatting schedule data from API:', apiData);
-    
-    // Kiểm tra và đảm bảo apiData là mảng có thể lặp qua
+    const formattedData = {};    
     let subjectsToProcess = [];
     
     if (!apiData || !Array.isArray(apiData)) {
-        console.log('API data is not an array:', apiData);
         
         // Xử lý trường hợp API trả về cấu trúc có subschedule hoặc subscheldule (lỗi chính tả)
         if (apiData && typeof apiData === 'object') {
             // Kiểm tra trường hợp lỗi chính tả 'subscheldule'
             if (Array.isArray(apiData.subscheldule)) {
-                console.log('Found subscheldule array (with typo) in API data with length:', apiData.subscheldule.length);
                 subjectsToProcess = apiData.subscheldule;
             } 
             // Kiểm tra trường hợp đúng chính tả 'subschedule'
             else if (Array.isArray(apiData.subschedule)) {
-                console.log('Found subschedule array in API data with length:', apiData.subschedule.length);
                 subjectsToProcess = apiData.subschedule;
             }
-            // Xử lý các trường hợp khác như trước
             else if (Array.isArray(apiData.subjects)) {
-                console.log('Using subjects array from API data');
                 subjectsToProcess = apiData.subjects;
             } else if (Array.isArray(apiData.data)) {
-                console.log('Using data array from API data');
                 subjectsToProcess = apiData.data;
             } else {
-                console.log('No valid array found in response, returning empty schedule data');
-                return formattedData; // Trả về object rỗng nếu không thể xử lý
+                return formattedData; 
             }
         } else {
-            console.log('API data is not a valid object, returning empty schedule data');
-            return formattedData; // Trả về object rỗng nếu không thể xử lý
+            return formattedData;
         }
     } else {
         subjectsToProcess = apiData;
@@ -68,31 +56,20 @@ const formatScheduleData = async (apiData, token) => {
     const processedEvents = new Set();
     
     for (const subject of subjectsToProcess) {
-        console.log(`Processing subject: ${subject.subjectName} (${subject.subjectId})`);
         
         // Check if subject has schedules
         if (!subject.schedules || !Array.isArray(subject.schedules)) {
-            console.log(`No schedules found for subject ${subject.subjectName}`);
             continue;
         }
         
-        console.log(`Found ${subject.schedules.length} schedules for subject ${subject.subjectName}`);
         
         for (const schedule of subject.schedules) {
             // Generate a fallback ID if scheduleId is missing
             const scheduleID = schedule.scheduleID || schedule.scheduleId;
             if (!scheduleID) {
-                console.log('Schedule missing scheduleId, generating fallback ID');
                 schedule.scheduleID = `fallback-${subject.subjectId}-${new Date().getTime()}-${Math.random().toString(36).substring(2, 9)}`;
             }
-            
-            console.log(`Processing schedule: ${scheduleID}`);
-            console.log('Raw startDateTime:', schedule.startDateTime);
-            console.log('Raw endDateTime:', schedule.endDateTime);
-            console.log('Days of Week:', schedule.daysOfWeek);
-            console.log('Class Time:', schedule.classTime);
-            console.log('Subject Period:', schedule.subjectPeriod);
-            
+         
             // Get instructor information if instructorID is available
             let instructorName = 'N/A';
             if (schedule.instructorID) {
@@ -110,7 +87,6 @@ const formatScheduleData = async (apiData, token) => {
             // Handle recurring events based on daysOfWeek
             if (schedule.daysOfWeek) {
                 const daysArray = schedule.daysOfWeek.split(',').map(day => day.trim());
-                console.log('Days array:', daysArray);
                 
                 // Get the start and end date range for the schedule
                 const scheduleStartDate = new Date(schedule.startDateTime);
@@ -155,9 +131,7 @@ const formatScheduleData = async (apiData, token) => {
                         endTime.setMinutes(endTime.getMinutes() + periodMinutes);
                         
                         // Format date as key (YYYY-MM-DD)
-                        const dateKey = format(eventDate, 'yyyy-MM-dd');
-                        console.log(`Generated event for ${dayName} on ${dateKey} at ${format(eventDate, 'HH:mm')}`);
-                        
+                        const dateKey = format(eventDate, 'yyyy-MM-dd');                        
                         // Tạo một event signature để kiểm tra trùng lặp
                         const eventSignature = `${subject.subjectId}-${dateKey}-${format(eventDate, 'HH:mm')}`;
                         
@@ -183,7 +157,7 @@ const formatScheduleData = async (apiData, token) => {
                                 sessionNo: schedule.sessionNo || '7',
                                 room: schedule.room || 'N/A',
                                 location: schedule.location || 'School',
-                                instructor: instructorName,
+                                instructor: schedule.instructorName || 'N/A',
                                 status: schedule.status || 'pending',
                                 color: randomColor,
                                 dayOfWeek: dayName,
@@ -196,9 +170,7 @@ const formatScheduleData = async (apiData, token) => {
                             }
                             
                             formattedData[dateKey].push(event);
-                        } else {
-                            console.log(`Skipped duplicate event: ${eventSignature}`);
-                        }
+                        }  
                     }
                     
                     // Move to the next day
@@ -217,12 +189,9 @@ const formatScheduleData = async (apiData, token) => {
                     endDateTime.setMinutes(endDateTime.getMinutes() + periodMinutes);
                 }
                 
-                console.log('Parsed startDateTime:', startDateTime.toISOString());
-                console.log('Parsed endDateTime:', endDateTime.toISOString());
                 
                 // Format date as key (YYYY-MM-DD)
                 const dateKey = format(startDateTime, 'yyyy-MM-dd');
-                console.log('Generated dateKey:', dateKey);
                 
                 // Tạo một event signature để kiểm tra trùng lặp
                 const eventSignature = `${subject.subjectId}-${dateKey}-${format(startDateTime, 'HH:mm')}`;
@@ -268,7 +237,6 @@ const formatScheduleData = async (apiData, token) => {
         }
     }
     
-    console.log('Formatted data keys:', Object.keys(formattedData));
     return formattedData;
 };
 
@@ -307,8 +275,6 @@ const Schedule = ({ navigation }) => {
         startOfWeek(initialDate, { weekStartsOn: 1 })
     );
     
-    console.log('Initial week start (current week):', format(startOfWeek(initialDate, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-
     const currentWeekDates = useMemo(() => {
         const start = currentWeekStart;
         const end = addDays(start, 6);
@@ -329,7 +295,6 @@ const Schedule = ({ navigation }) => {
     const handlePreviousWeek = () => {
         setCurrentWeekStart((prev) => {
             const newWeekStart = addDays(prev, -7);
-            console.log('Navigating to previous week:', format(newWeekStart, 'yyyy-MM-dd'));
             return newWeekStart;
         });
     };
@@ -337,7 +302,6 @@ const Schedule = ({ navigation }) => {
     const handleNextWeek = () => {
         setCurrentWeekStart((prev) => {
             const newWeekStart = addDays(prev, 7);
-            console.log('Navigating to next week:', format(newWeekStart, 'yyyy-MM-dd'));
             return newWeekStart;
         });
     };
@@ -360,23 +324,11 @@ const Schedule = ({ navigation }) => {
                 throw new Error('No authentication token found');
             }
             
-            console.log('Fetching schedule with role:', userRole || 'undefined');
             const data = await getSchedule(userToken, userRole);
             
-            // Log chi tiết cấu trúc dữ liệu
-            console.log('Raw schedule data type:', typeof data);
-            console.log('Is array?', Array.isArray(data));
-            
-            if (data) {
-                console.log('Raw schedule data keys:', Object.keys(data));
-            }
-            
-            // Không cần xử lý dữ liệu trước khi truyền vào formatScheduleData
             // formatScheduleData sẽ tự động xác định và trích xuất dữ liệu đúng
             const formattedData = await formatScheduleData(data, userToken);
             setScheduleData(formattedData);
-            
-            console.log('Schedule data set successfully');
         } catch (error) {
             console.error('Error fetching schedule data:', error);
         } finally {
@@ -391,12 +343,7 @@ const Schedule = ({ navigation }) => {
         // Sort date keys chronologically
         const dateKeys = Object.keys(data).sort();
         if (dateKeys.length === 0) return null;
-        
-        console.log('Available date keys in schedule:', dateKeys);
-        
-        // Parse the first date with events
         const firstDate = new Date(dateKeys[0]);
-        console.log('First date with events:', firstDate);
         return firstDate;
     };
     
@@ -409,27 +356,6 @@ const Schedule = ({ navigation }) => {
         loadSchedule();
     }, []);
     
-    // Just log available dates with events when schedule data changes, but don't change the week
-    useEffect(() => {
-        if (Object.keys(scheduleData).length > 0) {
-            // Log all available dates with events
-            const dateKeys = Object.keys(scheduleData).sort();
-            console.log('All dates with events:', dateKeys);
-            
-            // Find the first date with events (for debugging only)
-            const dateWithEvents = findWeekWithEvents(scheduleData);
-            if (dateWithEvents) {
-                console.log('First date with events:', dateWithEvents.toISOString());
-                console.log('Week of first event:', format(startOfWeek(dateWithEvents, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-            }
-        }
-    }, [scheduleData]);
-    
-    // Refresh data when week changes
-    useEffect(() => {
-        // Optional: You could refetch with date range parameters if API supports it
-        // For now, we'll just use the client-side filtered data
-    }, [currentWeekStart]);
 
     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 

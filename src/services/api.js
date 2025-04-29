@@ -16,9 +16,7 @@ const api = axios.create({
 // Interceptor để kiểm tra lỗi 401 (Token hết hạn) và kiểm tra trạng thái tài khoản
 api.interceptors.response.use(
   (response) => {
-    // Xóa bỏ kiểm tra trạng thái tài khoản và cảnh báo tại đây
-    // để tránh hiển thị nhiều lần cảnh báo
-    return response; // Trả về response nếu không có lỗi
+    return response; 
   }, 
   (error) => {
     if (error.response && error.response.status === 401) {
@@ -36,18 +34,13 @@ api.interceptors.response.use(
   
 // Login function
 export const loginUser = async (UserName, password) => {
-  try {
-    console.log('Login Request:', { username: UserName, password: password });
-    
+  try {    
     const response = await api.post("/Login/login", {
       username: UserName,
       password: password,
     });
     
-    console.log('Login Response:', response.data);
-    
-    // Kiểm tra xem phản hồi có thành công và có token không
-    if (!response.data || !response.data.token) {
+        if (!response.data || !response.data.token) {
       console.log('Login failed: No valid token in response');
       return null; // Trả về null để component Login biết đăng nhập thất bại
     }
@@ -95,7 +88,7 @@ export const getNotifications = async (userId, token) => {
     // Kiểm tra lỗi "không tìm thấy thông báo"
     if (error.response?.data?.message === "No notifications found for this user.") {
       console.log("Không có thông báo cho người dùng này");
-      return { data: [] }; // Trả về mảng rỗng thay vì ném lỗi
+      return { data: [] }; 
     }
     // Các lỗi khác vẫn xử lý như cũ
     console.error("Notification API error:", error.response?.data || error.message);
@@ -113,6 +106,7 @@ export const markAsRead = async (notificationId, token) => {
     });
     return response.data;
   } catch (error) {
+    console.error('Mark Notification as Read Error:', error.response?.data || error.message);
     throw error.response ? error.response.data : "Network error";
   }
 };
@@ -120,18 +114,12 @@ export const markAsRead = async (notificationId, token) => {
 // Get user profile
 export const getUserProfile = async (userId, token) => {
   try {
-    console.log('Get Profile Request:', {
-      url: `/User/profile`,
-      token: token
-    });
 
     const response = await api.get(`/User/profile`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
-
-    console.log('Get Profile Response:', response.data);
 
     // Extract user data from the response
     const userData = response.data?.user || {};
@@ -170,7 +158,6 @@ export const checkAccountStatus = async (token) => {
       status: accountStatus
     };
   } catch (error) {
-    console.error('Check Account Status Error:', error.response?.data || error.message);
     return { isActive: false, status: "Error", error: error.message };
   }
 };
@@ -191,10 +178,7 @@ export const updateUserProfile = async (userId, profileData, token) => {
       phoneNumber: profileData.phoneNumber
     };
 
-    console.log('Update Profile Request:', {
-      url: `/User/${userId}/details`,
-      body: requestBody
-    });
+
 
     const response = await api.put(`/User/${userId}/details`, requestBody, {
       headers: {
@@ -202,7 +186,6 @@ export const updateUserProfile = async (userId, profileData, token) => {
       }
     });
 
-    console.log('Update Profile Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Update Profile Error:', error.response?.data || error.message);
@@ -240,17 +223,12 @@ export const resetPassword = async (token, newPassword) => {
 };
 export const getSpecialty = async (SpecialtyId, token) => {
   try {
-    console.log('Get Specialty request:', {
-      url: `/Specialty/${SpecialtyId}`,
-      token: token
-    });
 
     const response = await api.get(`/Specialty/${SpecialtyId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
-    console.log('Get Specialty response:', response.data);
     
     // Based on the logs, the API returns a nested structure with data inside
     if (response.data && response.data.success && response.data.data) {
@@ -277,17 +255,11 @@ export const getSpecialty = async (SpecialtyId, token) => {
 // Get course by ID
 export const getCourse = async (courseId, token) => {
   try {
-    console.log('Get Course request:', {
-      url: `/Course/${courseId}`,
-      token: token
-    });
-
     const response = await api.get(`/Course/${courseId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
-    console.log('Get Course response:', response.data);
     
     // Handle nested data structure similar to specialty endpoint
     if (response.data && response.data.success && response.data.data) {
@@ -316,7 +288,6 @@ export const getUnreadCount = async (userId, token) => {
       }
     });
 
-    console.log('Get unread count response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Get unread count error:', error.response?.data || error.message);
@@ -382,7 +353,6 @@ export const getSubject = async (subjectId, token) => {
       return response.data.data;
     } else if (response.data && response.data.subject) {
       // Handle structure with {message, subject}
-      console.log('Found subject in response.subject:', response.data.subject);
       return response.data.subject;
     } else if (response.data && response.data.subjectId) {
       // Direct access if not nested
@@ -412,7 +382,6 @@ export const changePassword = async (userId, passwordData, token) => {
       }
     });
 
-    console.log('Change Password Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Change Password Error:', error.response?.data || error.message);
@@ -423,7 +392,6 @@ export const changePassword = async (userId, passwordData, token) => {
 // Get user schedule
 export const getSchedule = async (token, role) => {
   try {
-    console.log('Fetching schedule with token:', token ? 'Token provided' : 'No token');
     
     // Lấy role từ localStorage nếu không được truyền vào
     if (!role) {
@@ -431,9 +399,9 @@ export const getSchedule = async (token, role) => {
         const userInfo = await AsyncStorage.getItem('userInfo');
         if (userInfo) {
           const userObj = JSON.parse(userInfo);
-          role = userObj.role || 'student'; // Mặc định là student nếu không tìm thấy
+          role = userObj.role || 'Trainee'; // Mặc định là student nếu không tìm thấy
         } else {
-          role = 'student'; // Mặc định là student nếu không có userInfo
+          role = 'Trainee'; // Mặc định là student nếu không có userInfo
         }
       } catch (error) {
         console.error('Error getting role from AsyncStorage:', error);
@@ -513,12 +481,10 @@ export const getUserById = async (userId, token) => {
       return { fullName: 'N/A' };
     }
     
-    console.log('Fetching user with ID:', userId);
     const response = await api.get(`/User/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
-    console.log('User API response:', response.data);
     
     // Handle the nested response structure
     if (response.data && response.data.data) {
@@ -537,7 +503,6 @@ export const getUserById = async (userId, token) => {
 // Upload user avatar
 export const updateUserAvatar = async (userId, imageUri, token) => {
   try {
-    console.log('Uploading avatar for user:', userId);
     
     // Create form data to send the image
     const formData = new FormData();
@@ -553,8 +518,6 @@ export const updateUserAvatar = async (userId, imageUri, token) => {
       type: `image/${fileType}`,
     });
     
-    console.log('Avatar form data prepared:', formData);
-    
     // Send multipart/form-data request
     const response = await axios.put(`${API_BASE_URL}/User/avatar`, formData, {
       headers: {
@@ -563,7 +526,6 @@ export const updateUserAvatar = async (userId, imageUri, token) => {
       },
     });
     
-    console.log('Avatar upload response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error uploading avatar:', error.response?.data || error.message);
@@ -574,17 +536,12 @@ export const updateUserAvatar = async (userId, imageUri, token) => {
 // Get user avatar
 export const getUserAvatar = async (userId, token) => {
   try {
-    console.log('Fetching avatar for user:', userId);
-    
-    // Lấy profile người dùng đã bao gồm avatarUrlWithSas
     const userProfile = await getUserProfile(userId, token);
     
     if (userProfile && userProfile.avatarUrlWithSas) {
-      console.log('Avatar fetch successful:', userProfile.avatarUrlWithSas.substring(0, 50) + '...');
       return userProfile.avatarUrlWithSas;
     }
     
-    console.log('No avatar URL found in profile');
     return null;
   } catch (error) {
     console.error('Error fetching avatar:', error.message || error);
@@ -598,25 +555,17 @@ export const getCertificates = async (token) => {
     
     const response = await api.get(`/Certificate/trainee/view`, {
       headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    console.log('[API] Certificates response status:', response.status);
-    
+    });    
     let certificatesList = [];
     if (Array.isArray(response.data)) {
-      console.log('[API] Setting directly from array, length:', response.data.length);
       certificatesList = response.data;
     } else if (response.data && Array.isArray(response.data.data)) {
-      console.log('[API] Setting from nested data property, length:', response.data.data.length);
       certificatesList = response.data.data;
     } else if (response.data && typeof response.data === 'object') {
-      console.log('[API] Response is object, keys:', Object.keys(response.data));
-      // If object can be converted to array
       if (response.data && Object.keys(response.data).length > 0) {
         try {
           const possibleArray = Object.values(response.data);
           if (Array.isArray(possibleArray[0])) {
-            console.log('[API] Setting from first array value in object, length:', possibleArray[0].length);
             certificatesList = possibleArray[0];
           }
         } catch (err) {
@@ -635,29 +584,22 @@ export const getCertificates = async (token) => {
 // Get user grades
 export const getUserGrades = async (userId, token) => {
   try {
-    console.log('[API] Fetching grades for user:', userId);
-    
+
     const response = await api.get(`/Grade/user/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     
-    console.log('[API] Grades response status:', response.status);
     
     let gradesList = [];
     if (Array.isArray(response.data)) {
-      console.log('[API] Setting directly from array, length:', response.data.length);
       gradesList = response.data;
     } else if (response.data && Array.isArray(response.data.data)) {
-      console.log('[API] Setting from nested data property, length:', response.data.data.length);
       gradesList = response.data.data;
     } else if (response.data && typeof response.data === 'object') {
-      console.log('[API] Response is object, keys:', Object.keys(response.data));
-      // If object can be converted to array
       if (response.data && Object.keys(response.data).length > 0) {
         try {
           const possibleArray = Object.values(response.data);
           if (Array.isArray(possibleArray[0])) {
-            console.log('[API] Setting from first array value in object, length:', possibleArray[0].length);
             gradesList = possibleArray[0];
           }
         } catch (err) {
@@ -676,7 +618,6 @@ export const getUserGrades = async (userId, token) => {
 // Import grades from Excel file
 export const uploadGradeExcel = async (fileUri, token) => {
   try {
-    console.log('[API] Uploading grades Excel file:', fileUri);
     
     // Get file name from the URI
     const fileName = fileUri.split('/').pop();
@@ -689,12 +630,6 @@ export const uploadGradeExcel = async (fileUri, token) => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
     
-    console.log('[API] FormData created with file:', fileName);
-    
-    // Log the formData to inspect what's being sent
-    for (const [key, value] of Object.entries(formData._parts)) {
-      console.log(`FormData part - ${key}:`, value);
-    }
     
     // Send the file to the API endpoint
     const response = await axios.post(`${API_BASE_URL}/Grade/import`, formData, {
@@ -705,7 +640,6 @@ export const uploadGradeExcel = async (fileUri, token) => {
       },
     });
     
-    console.log('[API] Excel upload response:', response.data);
     return response.data;
   } catch (error) {
     console.error('[API] Error uploading Excel file:', error.response?.data || error.message);
@@ -756,8 +690,6 @@ export const getAllGrades = async (token) => {
 // Update grade
 export const updateGrade = async (gradeData, token) => {
   try {
-    console.log(`Sending PUT request to ${API_BASE_URL}/Grade/${gradeData.gradeId}`);
-    console.log("Request body:", JSON.stringify(gradeData));
     
     const response = await axios.put(`${API_BASE_URL}/Grade/${gradeData.gradeId}`, {
       traineeAssignID: gradeData.traineeAssignID,
@@ -773,7 +705,6 @@ export const updateGrade = async (gradeData, token) => {
         'Content-Type': 'application/json'
       }
     });
-    console.log("Update grade response:", response.data);
     return response.data;
   } catch (error) {
     console.error("API Error - updateGrade:", error.response?.data || error.message);

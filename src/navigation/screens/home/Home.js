@@ -43,7 +43,6 @@ const Home = () => {
                       roleLower.includes('teacher') ||
                       roleLower === 'trainer';
     
-    console.log(`Role check: "${role}" -> isInstructor: ${isTeacher}`);
     return isTeacher;
   };
 
@@ -51,25 +50,18 @@ const Home = () => {
   const checkAllStorageKeys = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      console.log('[Home] All AsyncStorage keys:', keys);
 
       // Kiểm tra dữ liệu userInfo
       const userInfo = await AsyncStorage.getItem("userInfo");
-      console.log('[Home] userInfo raw:', userInfo);
       
       if (userInfo) {
         try {
           const parsedInfo = JSON.parse(userInfo);
-          console.log('[Home] Parsed userInfo:', parsedInfo);
           
           if (parsedInfo.role) {
-            console.log('[Home] Role from userInfo:', parsedInfo.role);
             const isTeacher = checkInstructorRole(parsedInfo.role);
             setUserRole(parsedInfo.role);
             setIsInstructor(isTeacher);
-            
-            // Debug alert
-            // Alert.alert("Role Info", `Role: ${parsedInfo.role}\nIs Instructor: ${isTeacher}`);
           }
         } catch (e) {
           console.error('[Home] Error parsing userInfo:', e);
@@ -79,7 +71,6 @@ const Home = () => {
       // Kiểm tra dữ liệu userRole trực tiếp
       const directRole = await AsyncStorage.getItem("userRole");
       if (directRole) {
-        console.log('[Home] Direct userRole:', directRole);
         const isTeacher = checkInstructorRole(directRole);
         setUserRole(directRole);
         setIsInstructor(isTeacher);
@@ -98,8 +89,6 @@ const Home = () => {
       const fullName = await AsyncStorage.getItem("userFullName");
       const userID = await AsyncStorage.getItem("userId");
       const avatarUrl = await AsyncStorage.getItem("userAvatar");
-      
-      console.log("[Home] Loading data - Avatar URL:", avatarUrl ? `Found (${avatarUrl.substring(0, 30)}...)` : "Not found");
       
       setUserFullName(fullName || "");
       setUserId(userID || "");
@@ -128,8 +117,6 @@ const Home = () => {
     const loginListener = EventRegister.addEventListener(
       'userLoggedIn',
       (data) => {
-        console.log('[Home] User logged in event received');
-        // Đợi 1 giây để AsyncStorage được cập nhật
         setTimeout(() => {
           loadUserData();
         }, 1000);
@@ -153,7 +140,6 @@ const Home = () => {
     const updateNotificationCountListener = EventRegister.addEventListener(
       'updateNotificationCount',
       (data) => {
-        console.log('[Home] Received updateNotificationCount:', data);
         // Cập nhật số lượng thông báo chưa đọc
         setUnreadCount(data.unreadCount || 0);
         // Tải lại thông báo nếu cần
@@ -192,7 +178,6 @@ const Home = () => {
   useEffect(() => {
     // Kiểm tra lại vai trò mỗi khi userRole thay đổi
     const isTeacher = checkInstructorRole(userRole);
-    console.log(`[Home] userRole changed: "${userRole}" -> isInstructor: ${isTeacher}`);
     setIsInstructor(isTeacher);
   }, [userRole]);
   
@@ -212,13 +197,8 @@ const Home = () => {
       try {
         const unreadResponse = await getUnreadCount(userID, token);
         const unreadTotal = unreadResponse?.unreadCount || 0;
-        
-        // Cập nhật state với số thông báo chưa đọc mới
-        console.log("Fetched unread count:", unreadTotal);
         setUnreadCount(unreadTotal);
       } catch (unreadError) {
-        // Bỏ qua lỗi khi lấy số thông báo chưa đọc
-        console.log("Unread count not available:", unreadError?.message || "Unknown error");
         setUnreadCount(0);
       }
       
@@ -274,17 +254,14 @@ const Home = () => {
         });
         
         // Cập nhật state
-        console.log("Setting notifications:", formattedNotifications.length, "items");
         setNotifications(formattedNotifications);
       } else {
         // Nếu không có thông báo, đặt mảng rỗng
-        console.log("No notifications available, setting empty array");
         setNotifications([]);
       }
     } catch (error) {
       // Ghi nhật ký lỗi nhưng không hiển thị thông báo lỗi cho người dùng
       console.log("Error in fetchNotifications:", error?.message || "Unknown error");
-      // Đặt thông báo thành mảng rỗng để tránh hiển thị dữ liệu cũ
       setNotifications([]);
     }
   };
@@ -418,12 +395,16 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: Platform.select({
+      ios: 60,
+      android: 40
+    }),
     paddingBottom: 20,
+    backgroundColor: 'transparent',
   },
   headerContainer: {
     flexDirection: "column",

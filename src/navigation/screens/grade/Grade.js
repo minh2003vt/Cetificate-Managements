@@ -35,7 +35,6 @@ const Grade = ({ navigation }) => {
       if (!token) return;
       
       const uniqueSubjectIds = [...new Set(gradesList.map(grade => grade.subjectId))];
-      console.log("[Grade] Fetching subject names for:", uniqueSubjectIds);
       
       const subjectNamesMap = {};
       
@@ -56,7 +55,6 @@ const Grade = ({ navigation }) => {
         }
       }
       
-      console.log("[Grade] Final subject names mapping:", subjectNamesMap);
       setSubjectNames(subjectNamesMap);
     } catch (err) {
       console.error("[Grade] Error fetching subject names:", err);
@@ -64,22 +62,17 @@ const Grade = ({ navigation }) => {
   };
 
   useEffect(() => {
-    console.log('[Grade] Component mounted');
     
     const fetchGradesData = async () => {
       try {
-        console.log('[Grade] Starting grades fetch');
         setLoading(true);
         
         // Get authentication info
         const userToken = await AsyncStorage.getItem("userToken");
         const userId = await AsyncStorage.getItem("userId");
         
-        console.log('[Grade] UserId:', userId);
-        console.log('[Grade] Token available:', !!userToken);
-        
         if (!userToken || !userId) {
-          throw new Error("Bạn cần đăng nhập để xem điểm số");
+          throw new Error("You need to login to view grades");
         }
         
         // Get grades using the API function
@@ -98,10 +91,9 @@ const Grade = ({ navigation }) => {
           name: err.name,
           stack: err.stack
         });
-        setError("Không thể tải điểm số. Vui lòng thử lại sau.");
+        setError("Cannot load grades. Please try again later.");
       } finally {
         setLoading(false);
-        console.log('[Grade] Fetch complete');
       }
     };
 
@@ -126,7 +118,6 @@ const Grade = ({ navigation }) => {
   const renderItem = ({ item }) => {
     // Get subject name from subjectNames state if available, otherwise use subjectId
     const subjectName = subjectNames[item.subjectId] || `Subject ${item.subjectId}`;
-    console.log(`[Grade] Rendering item for ${item.subjectId}, name:`, subjectName);
     
     return (
       <TouchableOpacity

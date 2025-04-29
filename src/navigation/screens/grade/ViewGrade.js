@@ -76,7 +76,6 @@ const ViewGrade = ({ navigation }) => {
       if (!token) return;
       
       const uniqueSubjectIds = [...new Set(gradesList.map(grade => grade.subjectId).filter(Boolean))];
-      console.log("[ViewGrade] Fetching subject names for:", uniqueSubjectIds);
       
       const subjectNamesMap = {};
       
@@ -98,7 +97,6 @@ const ViewGrade = ({ navigation }) => {
         }
       }
       
-      console.log("[ViewGrade] Final subject names mapping:", subjectNamesMap);
       setSubjectNames(subjectNamesMap);
     } catch (err) {
       console.error("[ViewGrade] Error fetching subject names:", err);
@@ -118,7 +116,6 @@ const ViewGrade = ({ navigation }) => {
 
       const response = await getAllGrades(token);
 
-      console.log("Grades API response:", response);
       
       setGrades(response);
       
@@ -329,7 +326,6 @@ const ViewGrade = ({ navigation }) => {
         remarks: editedGrade.remarks || ""
       };
       
-      console.log("Sending update to Grade/" + updatedGrade.gradeId + ":", JSON.stringify(updatedGrade));
       
       await updateGrade(updatedGrade, token);
       Alert.alert('Success', 'Grade updated successfully');

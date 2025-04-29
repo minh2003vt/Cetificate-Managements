@@ -72,9 +72,8 @@ const History = ({ navigation }) => {
       // Get certificates using the API function
       const certificatesList = await getCertificates(userToken);
       
-      // Lọc bỏ các chứng chỉ có status là "Pending"
-      const filteredCertificates = certificatesList.filter(cert => cert.status !== "Pending");
-      
+        const filteredCertificates = certificatesList.filter(cert => cert.status !== "Pending" && cert.status !== "Revoked");
+        
       setCertificates(filteredCertificates);
       
       // After getting certificates, fetch their course names

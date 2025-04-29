@@ -132,11 +132,11 @@ const ImportScore = ({ navigation }) => {
         }
         
       } else {
-        Alert.alert('Lỗi', 'Không thể chọn tệp. Vui lòng thử lại sau.');
+        Alert.alert('Error', 'Cannot pick file. Please try again later.');
       }
     } catch (err) {
       console.error('Error picking document:', err);
-      Alert.alert('Lỗi', 'Không thể chọn tệp. Vui lòng thử lại sau. Lỗi: ' + err.message);
+      Alert.alert('Error', 'Cannot pick file. Please try again later. Error: ' + err.message);
       setLoading(false);
     }
   };
@@ -144,7 +144,7 @@ const ImportScore = ({ navigation }) => {
   // Gửi file Excel lên server
   const sendExcelFile = async () => {
     if (!excelFile) {
-      Alert.alert('Lỗi', 'Vui lòng chọn file Excel trước khi gửi');
+      Alert.alert('Error', 'Please select an Excel file before sending');
       return;
     }
 
@@ -155,7 +155,7 @@ const ImportScore = ({ navigation }) => {
 
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        throw new Error('Không tìm thấy token xác thực.');
+        throw new Error('Authentication token not found.');
       }
 
       // Hiển thị tiến trình tải lên
@@ -171,13 +171,11 @@ const ImportScore = ({ navigation }) => {
       
       clearInterval(uploadTimer);
       setUploadProgress(100);
-      
-      console.log('Upload success:', response);
-      
+            
       // Hiển thị thông báo thành công
       Alert.alert(
-        'Thành công',
-        'File đã được tải lên thành công.',
+        'Success',
+        'File has been uploaded successfully.',
         [{ text: 'OK', onPress: () => {
           setExcelFile(null);
           setPreviewData(null);
@@ -185,7 +183,7 @@ const ImportScore = ({ navigation }) => {
       );
     } catch (err) {
       console.error('Error uploading file:', err);
-      let errorMessage = 'Đã xảy ra lỗi khi tải file lên. Vui lòng thử lại sau.';
+      let errorMessage = 'An error occurred while uploading the file. Please try again later.';
       
       if (typeof err === 'string') {
         errorMessage = err;
@@ -197,7 +195,7 @@ const ImportScore = ({ navigation }) => {
       }
       
       setError(errorMessage);
-      Alert.alert('Lỗi', errorMessage);
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -289,7 +287,7 @@ const ImportScore = ({ navigation }) => {
                     <FontAwesome name="file-excel-o" size={50} color="#999" />
                     <Text style={styles.noFileText}>No file selected</Text>
                     {error && (
-                      <Text style={styles.uploadError}>Đã xảy ra lỗi khi tải file lên. Vui lòng thử lại sau.</Text>
+                      <Text style={styles.uploadError}>An error occurred while uploading the file. Please try again later.</Text>
                     )}
                   </View>
                 )}

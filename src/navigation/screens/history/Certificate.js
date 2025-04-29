@@ -12,7 +12,6 @@ import {
   Modal,
   SafeAreaView,
   Dimensions,
-  ToastAndroid,
   StatusBar,
   Platform,
   PermissionsAndroid
@@ -22,12 +21,16 @@ import { FontAwesome } from "@expo/vector-icons";
 import { WebView } from 'react-native-webview';
 import { BACKGROUND_HOMEPAGE } from '../../../utils/assets';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 const { width, height } = Dimensions.get('window');
 
 // Hàm tính chiều cao của status bar
 const getStatusBarHeight = () => {
-  return Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
+  return Platform.select({
+    ios: 44,
+    android: StatusBar.currentHeight || 0
+  });
 };
 
 const Certificate = () => {
@@ -49,16 +52,10 @@ const Certificate = () => {
     const sasUrl = certificateData.certificateURLwithSas;
     
     if (!sasUrl) {
-      console.error("[Certificate] SAS URL không tồn tại, không thể hiển thị chứng chỉ");
+      console.error("[Certificate] SAS URL not available, cannot display certificate");
       return '';
     }
-    
-    // In toàn bộ URL để kiểm tra
-    console.log("[Certificate] URL đầy đủ (KHÔNG ENCODE):", sasUrl);
-    
-    // ⚠️ QUAN TRỌNG: KHÔNG encode URL - sử dụng chính xác URL từ API
-    // SAS URL đã được cấu trúc đúng từ server, việc encode có thể thay đổi cấu trúc token
-    
+        
     return `
       <!DOCTYPE html>
       <html>
@@ -138,11 +135,8 @@ const Certificate = () => {
 
   // Log để debug
   useEffect(() => {
-    console.log("[Certificate] Rendering with data:", JSON.stringify(certificateData, null, 2));
     
     if (certificateData) {
-      console.log("[Certificate] Has certificate URL:", !!certificateData.certificateURL);
-      console.log("[Certificate] Has SAS URL:", !!certificateData.certificateURLwithSas);
       
       // Kiểm tra SAS URL có tồn tại không 
       const sasUrl = certificateData.certificateURLwithSas;
@@ -155,11 +149,9 @@ const Certificate = () => {
       
       try {
         const urlObj = new URL(sasUrl);
-        console.log("[Certificate] SAS URL is valid:", urlObj.href.substring(0, 100) + "...");
         
         // Kiểm tra xem URL có phải là Azure Blob Storage URL với SAS token
         if (urlObj.href.includes("blob.core.windows.net") && urlObj.search.includes("sig=")) {
-          console.log("[Certificate] URL is valid Azure Blob Storage URL with SAS token");
         } else {
           console.warn("[Certificate] URL may not be a valid Azure Blob Storage URL with SAS token");
         }
@@ -182,11 +174,20 @@ const Certificate = () => {
     }/${date.getFullYear()}`;
   };
 
+  // Thay thế ToastAndroid.show bằng Toast.show
+  const showToast = (message) => {
+    Toast.show({
+      type: 'info',
+      text1: message,
+      position: 'top',
+      visibilityTime: 2000,
+      autoHide: true,
+    });
+  };
+
   // Phương thức tải xuống đơn giản bằng trình duyệt
   const downloadCertificateFile = async () => {
-    try {
-      console.log("[Certificate] Starting certificate download");
-      
+    try {      
       if (!certificateData || !certificateData.certificateURLwithSas) {
         Alert.alert("Notice", "Unable to download. Certificate URL not available.");
         return;
@@ -203,10 +204,9 @@ const Certificate = () => {
         await Linking.openURL(downloadUrl);
         
         if (Platform.OS === 'android') {
-          ToastAndroid.show("Opening browser for download...", ToastAndroid.SHORT);
+          showToast("Opening browser for download...");
         }
         
-        console.log("[Certificate] Browser opened for download");
       } else {
         console.error("[Certificate] Cannot open URL:", downloadUrl);
         Alert.alert("Error", "Cannot open URL in browser.");
@@ -230,12 +230,7 @@ const Certificate = () => {
     lastTapRef.current = now;
   };
 
-  // Xử lý click
-  const handleSingleTap = () => {
-    // Nếu phát hiện single tap, hiển thị modal zoom
-    setIsZoomed(true);
-  };
-
+  
   // Xử lý lỗi WebView
   const handleWebViewError = (syntheticEvent) => {
     const { nativeEvent } = syntheticEvent;
@@ -272,7 +267,6 @@ const Certificate = () => {
       console.error(`[Certificate] HTTP Status Error: ${nativeEvent.statusCode}`);
       
       if (loadAttempts < 3) {
-        console.log(`[Certificate] Retrying load (Attempt ${loadAttempts + 1} of 3)...`);
         setLoadAttempts(prev => prev + 1);
         setTimeout(() => {
           webViewRef.current?.reload();
@@ -289,23 +283,7 @@ const Certificate = () => {
     }
   };
   
-  // Xử lý tin nhắn từ WebView
-  const handleWebViewMessage = (event) => {
-    try {
-      console.log("[Certificate] Received raw message from WebView:", event.nativeEvent.data);
-      const data = JSON.parse(event.nativeEvent.data);
-      console.log("[Certificate] Parsed message from WebView:", data);
-      
-      if (data.type === 'error') {
-        setError(data.message);
-        setLoading(false);
-      } else if (data.type === 'loaded' || data.type === 'success') {
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error("[Certificate] Error parsing WebView message:", err);
-    }
-  };
+  
   
   // Thử lại tải chứng chỉ
   const handleRetryLoad = () => {
@@ -389,11 +367,9 @@ const Certificate = () => {
               onError={handleWebViewError}
               onHttpError={handleHttpError}
               onLoadStart={(e) => {
-                console.log("[Certificate] WebView starting to load:", e.nativeEvent.url);
                 setLoading(true);
               }}
               onLoadEnd={(e) => {
-                console.log("[Certificate] WebView finished loading:", e.nativeEvent.url);
                 setLoading(false);
               }}
               originWhitelist={['*']}
@@ -470,7 +446,7 @@ const Certificate = () => {
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -516,13 +492,13 @@ const Certificate = () => {
                 onError={(syntheticEvent) => {
                   const { nativeEvent } = syntheticEvent;
                   console.error('WebView error:', nativeEvent);
-                  setError('Không thể hiển thị chứng chỉ. Vui lòng thử lại.');
+                  setError('Cannot display certificate. Please try again.');
                   setLoading(false);
                 }}
                 onHttpError={(syntheticEvent) => {
                   const { nativeEvent } = syntheticEvent;
                   console.error('WebView HTTP error:', nativeEvent);
-                  setError(`Lỗi HTTP: ${nativeEvent.statusCode}`);
+                  setError(`HTTP Error: ${nativeEvent.statusCode}`);
                   setLoading(false);
                 }}
                 key={loadAttempts} // Khi loadAttempts thay đổi, WebView sẽ được tạo lại
@@ -552,7 +528,8 @@ const Certificate = () => {
             <Text style={styles.loadingText}>loading certificate...</Text>
           </View>
         )}
-      </View>
+        <Toast />
+      </SafeAreaView>
 
       <Modal
         visible={isZoomed}
@@ -596,7 +573,7 @@ const Certificate = () => {
             onPress={openDirectUrl}
           >
             <FontAwesome name="external-link" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Mở trong trình duyệt</Text>
+            <Text style={styles.actionButtonText}>Open in browser</Text>
           </TouchableOpacity>
         </View>
       </Modal>
