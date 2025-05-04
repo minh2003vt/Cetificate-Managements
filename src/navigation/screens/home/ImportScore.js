@@ -25,9 +25,7 @@ const ImportScore = ({ navigation }) => {
   // Đọc dữ liệu từ file Excel thực
   const readExcelFile = async (fileUri) => {
     try {
-      setParsingError(null);
-      console.log("Reading Excel file from:", fileUri);
-      
+      setParsingError(null);      
       // Đọc file dưới dạng base64
       const base64Data = await FileSystem.readAsStringAsync(fileUri, { 
         encoding: FileSystem.EncodingType.Base64 
@@ -42,9 +40,7 @@ const ImportScore = ({ navigation }) => {
       
       // Chuyển đổi sang dạng JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      
-      console.log("Excel data parsed successfully, rows:", jsonData.length);
-      
+            
       // Kiểm tra dữ liệu trống
       if (!jsonData || jsonData.length === 0) {
         setParsingError("File Excel không có dữ liệu");
@@ -79,7 +75,6 @@ const ImportScore = ({ navigation }) => {
         multiple: false
       });
 
-      console.log('Document picker result:', result);
 
       if (result.canceled) {
         console.log('User cancelled document picker');
@@ -98,12 +93,10 @@ const ImportScore = ({ navigation }) => {
           return;
         }
 
-        console.log('File selected:', fileUri);
         
         // Kiểm tra kích thước file
         try {
           const fileInfo = await FileSystem.getInfoAsync(fileUri);
-          console.log('File info:', fileInfo);
           
           if (fileInfo.size > 10 * 1024 * 1024) { // Giới hạn 10MB
             Alert.alert('Lỗi', 'File quá lớn. Vui lòng chọn file nhỏ hơn 10MB');

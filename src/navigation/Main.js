@@ -11,7 +11,7 @@ import { getUnreadCount } from '../services/api';
 import { EventRegister } from 'react-native-event-listeners';
 
 // Import các component từ thư mục mới thông qua index.js
-import { Home, Schedule, ImportScore } from '../../src/navigation/screens/home';
+import { Home, Schedule, ImportScore, SubjectList, SubjectDetail } from '../../src/navigation/screens/home';
 import { Notifications } from '../../src/navigation/screens/notifications';
 import { History, Certificate } from '../../src/navigation/screens/history';
 import { Courses, CourseDetail, TrainingPlan, TrainingPlanDetail } from '../../src/navigation/screens/training';
@@ -73,7 +73,7 @@ function TrainingPlanStack() {
 function HomeStack() {
   return (
     <Stack.Navigator>
-            <Stack.Screen
+      <Stack.Screen
         name="Home"
         component={Home}
         options={{ headerShown: false }}
@@ -97,6 +97,21 @@ function HomeStack() {
         name="ImportScore"
         component={ImportScore}
         options={{ headerShown: false }} // Hide the header in ImportScore screen
+      />
+      <Stack.Screen
+        name="SubjectList"
+        component={SubjectList}
+        options={{ headerShown: false }} // Hide the header in SubjectList screen
+      />
+      <Stack.Screen
+        name="SubjectDetail"
+        component={SubjectDetail}
+        options={{ headerShown: false }} // Hide the header in SubjectDetail screen
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={Notifications}
+        options={{ headerShown: false }} // Hide the header in Notifications screen
       />
     </Stack.Navigator>
   );
@@ -142,12 +157,8 @@ const Main = () => {
   const checkAllStorageKeys = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      console.log('All AsyncStorage keys:', keys);
-
-      // Kiểm tra từng key
       for (const key of keys) {
         const value = await AsyncStorage.getItem(key);
-        console.log(`Key: ${key}, Value:`, value);
       }
     } catch (error) {
       console.error('Error checking AsyncStorage:', error);
@@ -162,15 +173,12 @@ const Main = () => {
       
       // Thử lấy từ userInfo
       const userInfo = await AsyncStorage.getItem('userInfo');
-      console.log('Raw userInfo from storage:', userInfo);
       
       if (userInfo) {
         try {
           const parsedInfo = JSON.parse(userInfo);
-          console.log('Parsed userInfo:', parsedInfo);
           
           if (parsedInfo.role) {
-            console.log('Found role in parsedInfo.role:', parsedInfo.role);
             setUserRole(parsedInfo.role);
           }
         } catch (parseError) {
@@ -180,12 +188,9 @@ const Main = () => {
       
       // Thử lấy trực tiếp từ userRole key (nếu có)
       const directRole = await AsyncStorage.getItem('userRole');
-      console.log('Direct userRole from storage:', directRole);
       if (directRole) {
-        console.log('Setting userRole to:', directRole);
         setUserRole(directRole);
       }
-      
       // Cập nhật trạng thái hiển thị tab dựa trên vai trò
       updateTabVisibility();
     } catch (error) {
@@ -198,10 +203,7 @@ const Main = () => {
     const lowerRole = userRole.toLowerCase();
     const isInstructorRole = lowerRole.includes('instructor') || 
                              lowerRole === 'trainer';
-    
-    console.log('Role lowercase:', lowerRole);
-    console.log('Is instructor role?', isInstructorRole);
-    
+        
     setShowAllTabs(!isInstructorRole);
   };
 
@@ -212,7 +214,6 @@ const Main = () => {
       
       if (userId && token) {
         const response = await getUnreadCount(userId, token);
-        console.log('Unread count:', response);
         setUnreadCount(response.unreadCount || 0);
       }
     } catch (error) {
@@ -231,7 +232,6 @@ const Main = () => {
     const unreadCountListener = EventRegister.addEventListener(
       'updateNotificationCount',
       (data) => {
-        console.log('Received new unread count:', data);
         setUnreadCount(data.unreadCount || 0);
       }
     );
@@ -254,7 +254,6 @@ const Main = () => {
     const loginListener = EventRegister.addEventListener(
       'userLoggedIn',
       (data) => {
-        console.log('User logged in event received:', data);
         // Đợi 1 giây để đảm bảo AsyncStorage đã được cập nhật
         setTimeout(() => {
           getUserRole();
@@ -273,7 +272,6 @@ const Main = () => {
 
   // Cập nhật hiển thị tab khi userRole thay đổi
   useEffect(() => {
-    console.log('userRole changed:', userRole);
     updateTabVisibility();
   }, [userRole]);
 

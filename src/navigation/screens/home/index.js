@@ -1,10 +1,14 @@
 // Export các component từ thư mục home
 import Home from './Home';
-import Schedule from './Schedule';
 import ImportScore from './ImportScore';
+import Schedule from './Schedule';
+import SubjectList from './SubjectList';
+import SubjectDetail from './SubjectDetail';
 
 export {
   Home,
+  ImportScore,
   Schedule,
-  ImportScore
+  SubjectList,
+  SubjectDetail
 }; 

@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StyleSheet,
+  TextInput,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,6 +22,8 @@ const History = ({ navigation }) => {
   const [courseNames, setCourseNames] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filteredCertificates, setFilteredCertificates] = useState([]);
 
   // Hàm lấy tên khóa học
   const fetchCourseNames = async (certificatesList) => {
@@ -90,14 +93,36 @@ const History = ({ navigation }) => {
       setError("Unable to load certificates. Please try again later.");
       } finally {
         setLoading(false);
-      console.log('[History] Fetch complete');
       }
     };
 
   useEffect(() => {
-    console.log('[History] Component mounted');
     fetchCertificatesData();
   }, []);
+
+  useEffect(() => {
+    filterCertificates();
+  }, [searchText, certificates, courseNames]);
+
+  const filterCertificates = () => {
+    if (!searchText.trim()) {
+      setFilteredCertificates(certificates);
+      return;
+    }
+
+    const searchLower = searchText.toLowerCase();
+    const filtered = certificates.filter(cert => {
+      const certCode = (cert.certificateCode || '').toLowerCase();
+      const status = (cert.status || '').toLowerCase();
+      const courseName = (courseNames[cert.courseId] || '').toLowerCase();
+      
+      return certCode.includes(searchLower) || 
+             status.includes(searchLower) || 
+             courseName.includes(searchLower);
+    });
+    
+    setFilteredCertificates(filtered);
+  };
 
   // Format date function
   const formatDate = (dateString) => {
@@ -152,6 +177,24 @@ const History = ({ navigation }) => {
           <Text style={styles.headerTitle}>History</Text>
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm kiếm chứng chỉ..."
+            placeholderTextColor="#B8C4D1"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+          {searchText.length > 0 ? (
+            <TouchableOpacity onPress={() => setSearchText("")}>
+              <FontAwesome name="times" size={20} color="#f65858" style={styles.clearIcon} />
+            </TouchableOpacity>
+          ) : (
+            <FontAwesome name="search" size={20} color="#B8C4D1" style={styles.searchIcon} />
+          )}
+        </View>
+
         {/* Danh sách lịch sử */}
         <View style={[styles.listContainer, { width, height: height * 0.8 }]}>
           {loading ? (
@@ -178,9 +221,14 @@ const History = ({ navigation }) => {
               <FontAwesome name="certificate" size={50} color="#B8C4D1" />
               <Text style={styles.emptyText}>You dont have any certificate yet.</Text>
             </View>
+          ) : searchText && filteredCertificates.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <FontAwesome name="search" size={50} color="#B8C4D1" />
+              <Text style={styles.emptyText}>Không tìm thấy chứng chỉ nào phù hợp với "{searchText}"</Text>
+            </View>
           ) : (
           <FlatList
-            data={certificates}
+            data={filteredCertificates}
               keyExtractor={(item) => item.certificateId.toString()}
               renderItem={renderItem}
               showsVerticalScrollIndicator={false}
@@ -205,7 +253,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     marginTop: 10, 
     position: "relative",
   },
@@ -219,6 +267,26 @@ const styles = StyleSheet.create({
   backButton: {
     position: "absolute",
     left: 0,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 30,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "black",
+  },
+  searchIcon: {
+    marginLeft: 10,
+  },
+  clearIcon: {
+    marginLeft: 10,
   },
   listContainer: {
     flex: 1,

@@ -86,6 +86,8 @@ const Profile = ({ navigation }) => {
       const userId = await AsyncStorage.getItem("userId");
       const userToken = await AsyncStorage.getItem("userToken");
 
+      console.log('Loading profile with:', { userId, userToken });
+
       if (!userId || !userToken) {
         Alert.alert("Error", "Please login again");
         navigation.navigate("Login");
@@ -96,6 +98,7 @@ const Profile = ({ navigation }) => {
       
       // Tải thông tin hồ sơ
       const userData = await getUserProfile(userId, userToken);
+      console.log("Profile Data:", userData);
 
       if (userData) {
         // Format date to YYYY-MM-DD
@@ -112,6 +115,7 @@ const Profile = ({ navigation }) => {
           dateOfBirth: dateOfBirth,
         };
 
+        console.log('Setting profile data:', profileData);
         setProfileData(profileData);
 
         // Update AsyncStorage with latest data
@@ -124,11 +128,13 @@ const Profile = ({ navigation }) => {
         
         // Lấy và lưu trữ URL avatar
         if (userData.avatarUrlWithSas) {
+          console.log("Avatar URL found in profile");
           setProfileImage(userData.avatarUrlWithSas);
           await AsyncStorage.setItem("userAvatar", userData.avatarUrlWithSas);
-        } 
-        Alert.alert("Error", "No profile data received");
-      }
+        } else {
+          console.log("No avatar URL in profile");
+        }
+      } 
     } catch (error) {
       console.error("Error loading profile:", error);
       Alert.alert("Error", error.message || "Failed to load profile data");
@@ -284,6 +290,7 @@ const Profile = ({ navigation }) => {
       }
 
       const response = await updateUserProfile(userId, profileData, token);
+      console.log('Update Profile Response:', response);
       
       Alert.alert('Success', response.message || 'Profile updated successfully');
       setIsEditing(false);
@@ -617,9 +624,12 @@ const Profile = ({ navigation }) => {
           text: "Logout",
           style: "destructive",
           onPress: async () => {
-            try {              
+            try {
+              console.log("Starting logout process...");
+              
               // Xóa tất cả dữ liệu đăng nhập
               await AsyncStorage.clear();
+              console.log("AsyncStorage cleared");
 
               // Chuyển hướng về màn hình Login ngay lập tức
               navigation.reset({
@@ -644,55 +654,6 @@ const Profile = ({ navigation }) => {
       ],
       { cancelable: true }
     );
-  };
-
-  const DatePickerComponent = ({ visible, onClose, value, onChange, theme }) => {
-    return Platform.select({
-      ios: (
-        <Modal
-          transparent={true}
-          visible={visible}
-          animationType="slide"
-        >
-          <View style={[styles.datePickerContainer, { backgroundColor: theme.modalBackground }]}>
-            <View style={[styles.datePickerHeader, { backgroundColor: theme.cardSolid }]}>
-              <TouchableOpacity onPress={onClose}>
-                <Text style={[styles.datePickerButtonText, { color: theme.primary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={() => {
-                  onChange(null, new Date(value));
-                  onClose();
-                }}
-              >
-                <Text style={[styles.datePickerButtonText, { color: theme.primary }]}>Done</Text>
-              </TouchableOpacity>
-            </View>
-            <DateTimePicker
-              value={new Date(value)}
-              mode="date"
-              display="spinner"
-              onChange={onChange}
-              maximumDate={new Date()}
-              style={[styles.datePicker, { backgroundColor: theme.cardSolid }]}
-              textColor={theme.text}
-            />
-          </View>
-        </Modal>
-      ),
-      android: (
-        visible && (
-          <DateTimePicker
-            value={new Date(value)}
-            mode="date"
-            display="default"
-            onChange={onChange}
-            maximumDate={new Date()}
-            textColor={theme.text}
-          />
-        )
-      )
-    });
   };
 
   return (
@@ -853,21 +814,57 @@ const Profile = ({ navigation }) => {
         </Modal>
 
         {/* Date Picker - Platform specific rendering */}
-        {showDatePicker && (
-          <DatePickerComponent
-            visible={showDatePicker}
-            onClose={() => setShowDatePicker(false)}
-            value={profileData.dateOfBirth}
-            onChange={(event, date) => {
-              if (date) {
-                setProfileData(prev => ({
-                  ...prev,
-                  dateOfBirth: date.toISOString().split('T')[0]
-                }));
-              }
-            }}
-            theme={theme}
-          />
+        {Platform.OS === 'ios' ? (
+          showDatePicker && (
+            <Modal
+              transparent={true}
+              visible={showDatePicker}
+              animationType="slide"
+            >
+              <View style={[styles.datePickerContainer, { backgroundColor: theme.modalBackground }]}>
+                <View style={[styles.datePickerHeader, { backgroundColor: theme.cardSolid }]}>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Text style={[styles.datePickerButtonText, { color: theme.primary }]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      handleDateChange(null, new Date(profileData.dateOfBirth));
+                      setShowDatePicker(false);
+                    }}
+                  >
+                    <Text style={[styles.datePickerButtonText, { color: theme.primary }]}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={new Date(profileData.dateOfBirth)}
+                  mode="date"
+                  display="spinner"
+                  onChange={(event, date) => {
+                    if (date) {
+                      setProfileData(prev => ({
+                        ...prev,
+                        dateOfBirth: date.toISOString().split('T')[0]
+                      }));
+                    }
+                  }}
+                  maximumDate={new Date()}
+                  style={[styles.datePicker, { backgroundColor: theme.cardSolid }]}
+                  textColor={theme.text}
+                />
+              </View>
+            </Modal>
+          )
+        ) : (
+          showDatePicker && (
+            <DateTimePicker
+              value={new Date(profileData.dateOfBirth)}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+              textColor={theme.text}
+            />
+          )
         )}
       </SafeAreaView>
     </ImageBackground>

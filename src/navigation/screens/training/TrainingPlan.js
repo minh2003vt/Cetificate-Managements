@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   SafeAreaView,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { getTrainingPlanUser } from '../../../services/api';
@@ -23,10 +24,31 @@ const TrainingPlan = ({ navigation }) => {
   const [error, setError] = useState(null);
   const { theme, isDarkMode } = useTheme();
   const [noPlansMessage, setNoPlansMessage] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filteredPlans, setFilteredPlans] = useState([]);
 
   useEffect(() => {
     fetchTrainingPlans();
   }, []);
+
+  useEffect(() => {
+    filterPlans();
+  }, [searchText, trainingPlans]);
+
+  const filterPlans = () => {
+    if (!searchText.trim()) {
+      setFilteredPlans(trainingPlans);
+      return;
+    }
+
+    const searchLower = searchText.toLowerCase();
+    const filtered = trainingPlans.filter(
+      plan => 
+        plan.planName.toLowerCase().includes(searchLower) || 
+        (plan.planLevel && plan.planLevel.toLowerCase().includes(searchLower))
+    );
+    setFilteredPlans(filtered);
+  };
 
   const fetchTrainingPlans = async () => {
     try {
@@ -51,26 +73,19 @@ const TrainingPlan = ({ navigation }) => {
       let plansData = [];
       
       if (response && response.plans && Array.isArray(response.plans)) {
-        console.log('Found plans property with length:', response.plans.length);
         plansData = response.plans;
       } else if (response && Array.isArray(response)) {
-        console.log('Response is an array with length:', response.length);
         plansData = response;
       } else if (response && response.message && response.plans) {
         // This matches the structure you shared
-        console.log('Found message and plans structure with length:', response.plans.length);
         plansData = response.plans;
       } else if (response && response.data && Array.isArray(response.data)) {
-        console.log('Found data array with length:', response.data.length);
         plansData = response.data;
       } else {
-        console.log('No recognized structure found, attempting to use raw response');
         // Last resort - try to use the response directly
         plansData = response;
       }
       
-      console.log('Final plansData:', plansData);
-      console.log('Plans count:', Array.isArray(plansData) ? plansData.length : 'Not an array');
       
       if (Array.isArray(plansData) && plansData.length > 0) {
         // Lọc chỉ những kế hoạch đào tạo có trạng thái "Approved"
@@ -194,31 +209,58 @@ const TrainingPlan = ({ navigation }) => {
               </Text>
             </View>
           ) : (
-            <FlatList
-              data={trainingPlans}
-              keyExtractor={(item) => item.planId}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => {
-                    navigation.navigate("TrainingPlanDetail", { trainingPlan: item });
-                  }}
-                >
-                  <View style={styles.card}>
-                    <View style={styles.cardContent}>
-                      <Text style={styles.title}>{item.planName}</Text>
-                      <Text style={styles.level}>Level: {item.planLevel}</Text>
-                      <Text style={styles.date}>{item.displayDate}</Text>
-                    </View>
-                    <FontAwesome
-                      name={item.iconName}
-                      size={30}
-                      color={item.iconColor}
-                      style={styles.icon}
-                    />
-                  </View>
-                </TouchableOpacity>
+            <>
+              <View style={styles.searchContainer}>
+                <FontAwesome name="search" size={20} color="#43546A" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search by name or level"
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  placeholderTextColor="#888"
+                />
+                {searchText ? (
+                  <TouchableOpacity onPress={() => setSearchText('')}>
+                    <FontAwesome name="times-circle" size={18} color="#43546A" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              
+              {filteredPlans.length === 0 ? (
+                <View style={styles.emptySearchContainer}>
+                  <FontAwesome name="search" size={40} color="#009099" />
+                  <Text style={styles.emptySearchText}>
+                    No training plan found matching "{searchText}"
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={filteredPlans}
+                  keyExtractor={(item) => item.planId}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate("TrainingPlanDetail", { trainingPlan: item });
+                      }}
+                    >
+                      <View style={styles.card}>
+                        <View style={styles.cardContent}>
+                          <Text style={styles.title}>{item.planName}</Text>
+                          <Text style={styles.level}>Level: {item.planLevel}</Text>
+                          <Text style={styles.date}>{item.displayDate}</Text>
+                        </View>
+                        <FontAwesome
+                          name={item.iconName}
+                          size={30}
+                          color={item.iconColor}
+                          style={styles.icon}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
               )}
-            />
+            </>
           )}
         </View>
       </SafeAreaView>
@@ -328,6 +370,36 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#43546A',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    height: 45,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: "100%",
+    fontSize: 16,
+    color: "#43546A",
+  },
+  emptySearchContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptySearchText: {
+    color: "#43546A",
     fontSize: 16,
     textAlign: 'center',
     marginTop: 10,

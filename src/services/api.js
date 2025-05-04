@@ -87,7 +87,6 @@ export const getNotifications = async (userId, token) => {
   } catch (error) {
     // Kiểm tra lỗi "không tìm thấy thông báo"
     if (error.response?.data?.message === "No notifications found for this user.") {
-      console.log("Không có thông báo cho người dùng này");
       return { data: [] }; 
     }
     // Các lỗi khác vẫn xử lý như cũ
@@ -662,7 +661,7 @@ export const uploadGradeExcel = async (fileUri, token) => {
 // Get all grades
 export const getAllGrades = async (token) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/Grade`, {
+    const response = await axios.get(`${API_BASE_URL}/Grade/instructor`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -672,7 +671,6 @@ export const getAllGrades = async (token) => {
     
     // Kiểm tra data có phải là mảng không
     if (response.data && Array.isArray(response.data)) {
-      // Nếu cần lọc theo instructor ID
       if (userId) {
         return response.data.filter(item => item.gradedByInstructorId === userId);
       }
@@ -709,5 +707,69 @@ export const updateGrade = async (gradeData, token) => {
   } catch (error) {
     console.error("API Error - updateGrade:", error.response?.data || error.message);
     throw error;
+  }
+};
+
+// Get all subjects
+export const fetchSubjects = async (token) => {
+  try {
+    console.log('Fetching subjects with token:', token?.substring(0, 10) + '...');
+
+    const response = await api.get(`/Subject`, {
+      headers: {
+        'Accept': '*/*',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch subjects');
+    }
+
+    const data = response.data;
+    
+    if (data && data.message === "Subjects retrieved successfully." && Array.isArray(data.subjects)) {
+      return data.subjects;
+    } else if (data && Array.isArray(data)) {
+      return data;
+    } else {
+      console.warn('Unexpected response format from fetchSubjects:', data);
+      return [];
+    }
+  } catch (err) {
+    console.error('Error in fetchSubjects:', err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// Get trainees in a subject
+export const getSubjectTrainees = async (subjectId, token) => {
+  try {
+    console.log('Fetching trainees for subject:', subjectId);
+
+    const response = await api.get(`/Subject/trainee/${subjectId}`, {
+      headers: {
+        'Accept': '*/*',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch trainees');
+    }
+
+    const data = response.data;
+    
+    if (data && data.message === "Trainee retrieved successfully." && Array.isArray(data.trainees)) {
+      return data.trainees;
+    } else if (data && Array.isArray(data)) {
+      return data;
+    } else {
+      console.warn('Unexpected response format from getSubjectTrainees:', data);
+      return [];
+    }
+  } catch (err) {
+    console.error('Error in getSubjectTrainees:', err.response?.data || err.message);
+    throw err;
   }
 };
