@@ -43,18 +43,62 @@ const Certificate = () => {
   const webViewRef = useRef(null);
   const lastTapRef = useRef(0);
   const [loadAttempts, setLoadAttempts] = useState(0);
+  const [internetPermission, setInternetPermission] = useState(Platform.OS !== 'android');
+  
+  // Kiểm tra và yêu cầu quyền Internet nếu cần thiết trên Android
+  useEffect(() => {
+    const checkInternetPermission = async () => {
+      if (Platform.OS === 'android') {
+        try {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.INTERNET,
+            {
+              title: "Internet Permission",
+              message: "The app needs access to the internet to display the certificate",
+              buttonNeutral: "Ask me later",
+              buttonNegative: "Deny",
+              buttonPositive: "Allow"
+            }
+          );
+          setInternetPermission(granted === PermissionsAndroid.RESULTS.GRANTED);
+          
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            setError("Do not have internet permission. Please allow internet permission to view certificate.");
+          }
+        } catch (err) {
+          console.error("Error requesting internet permission:", err);
+        }
+      }
+    };
+    
+    checkInternetPermission();
+  }, []);
+  
+  // Thêm log để debug trên Android
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      console.log("[Certificate] Checking on Android device");
+      console.log("[Certificate] Certificate URL:", certificateData?.certificateURL);
+      console.log("[Certificate] Certificate SAS URL exists:", !!certificateData?.certificateURLwithSas);
+    }
+  }, [certificateData]);
   
   // Tạo HTML để hiển thị PDF
   const generateHtmlContent = () => {
     if (!certificateData) return '';
     
-    // CHỈ sử dụng certificateURLwithSas vì URL thông thường không thể truy cập file trong Azure Blob
+    // CHỈ sử dụng certificateURLwithSas vì URL thông thường không thể truy cập file trong Azure Blob Storage
     const sasUrl = certificateData.certificateURLwithSas;
     
     if (!sasUrl) {
       console.error("[Certificate] SAS URL not available, cannot display certificate");
       return '';
     }
+    
+    // Sử dụng Google PDF Viewer cho Android - chuyển đổi URL để xem PDF qua Google
+    const googlePdfViewerUrl = Platform.OS === 'android' 
+      ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(sasUrl)}`
+      : sasUrl;
         
     return `
       <!DOCTYPE html>
@@ -97,7 +141,7 @@ const Certificate = () => {
       <body>
         <div class="pdf-container">
           <iframe 
-            src="${sasUrl}" 
+            src="${googlePdfViewerUrl}" 
             type="application/pdf" 
             width="100%" 
             height="100%"
@@ -347,14 +391,18 @@ const Certificate = () => {
 
     // Kiểm tra chứng chỉ và SAS URL có sẵn không
     if (certificateData && certificateData.certificateURLwithSas) {
+      // Sử dụng Google PDF Viewer cho Android
+      const pdfSource = Platform.OS === 'android'
+        ? { uri: `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(certificateData.certificateURLwithSas)}` }
+        : { uri: certificateData.certificateURLwithSas };
+      
       return (
         <View style={styles.contentContainer}>
           <View style={styles.certificateImageContainer}>
-            {/* Sử dụng WebView trực tiếp với URL SAS thay vì HTML */}
             <WebView
               ref={webViewRef}
               key={`pdf-viewer-${loadAttempts}`}
-              source={{ uri: certificateData.certificateURLwithSas }}
+              source={pdfSource}
               style={styles.certificateWebView}
               renderLoading={() => (
                 <View style={styles.webViewLoading}>
@@ -379,6 +427,7 @@ const Certificate = () => {
               allowingReadAccessToURL="*"
               cacheEnabled={false}
               incognito={true}
+              onShouldStartLoadWithRequest={() => true}
             />
           </View>
 
@@ -390,7 +439,13 @@ const Certificate = () => {
               <Ionicons name="download-outline" size={20} color="#FFF" />
               <Text style={styles.buttonText}>Export</Text>
             </TouchableOpacity>
-
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#28a745', marginLeft: 10 }]}
+              onPress={openInBrowser}
+            >
+              <FontAwesome name="external-link" size={20} color="#FFF" />
+              <Text style={styles.buttonText}>Mở trong trình duyệt</Text>
+            </TouchableOpacity>
           </View>
           
           {/* Thêm nút thử lại */}
@@ -472,6 +527,12 @@ const Certificate = () => {
             >
               <Text style={styles.retryButtonText}>Thử lại</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: "#28a745", marginTop: 10 }]}
+              onPress={openInBrowser}
+            >
+              <Text style={styles.retryButtonText}>Mở trong trình duyệt</Text>
+            </TouchableOpacity>
           </View>
         ) : certificateData ? (
           <>
@@ -488,6 +549,7 @@ const Certificate = () => {
                 source={{ html: htmlContent }}
                 style={styles.webview}
                 javaScriptEnabled={true}
+                domStorageEnabled={true}
                 onLoad={() => setLoading(false)}
                 onError={(syntheticEvent) => {
                   const { nativeEvent } = syntheticEvent;
@@ -502,6 +564,9 @@ const Certificate = () => {
                   setLoading(false);
                 }}
                 key={loadAttempts} // Khi loadAttempts thay đổi, WebView sẽ được tạo lại
+                onShouldStartLoadWithRequest={() => true}
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback={true}
               />
               {loading && (
                 <View style={styles.loadingOverlay}>
@@ -519,7 +584,13 @@ const Certificate = () => {
                 <Ionicons name="download-outline" size={20} color="#FFF" />
                 <Text style={styles.buttonText}>Export</Text>
               </TouchableOpacity>
-
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: '#28a745', marginLeft: 10 }]}
+                onPress={openInBrowser}
+              >
+                <FontAwesome name="external-link" size={20} color="#FFF" />
+                <Text style={styles.buttonText}>Mở trong trình duyệt</Text>
+              </TouchableOpacity>
             </View>
           </>
         ) : (
