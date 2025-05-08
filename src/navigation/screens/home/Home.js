@@ -313,9 +313,9 @@ const Home = () => {
             {[
               { title: "Schedule", icon: "calendar", navigateTo: "Schedule" },
                { 
-                title: isInstructor ? "My Subjects" : "Notification", 
-                icon: isInstructor ? "book" : "bell", 
-                navigateTo: isInstructor ? "SubjectList" : "Notifications", 
+                title: isInstructor ? "Notification" : "Notification", 
+                icon: isInstructor ? "bell" : "bell", 
+                navigateTo: isInstructor ? "Notifications" : "Notifications", 
                 badge: !isInstructor && unreadCount > 0 
               },
               { 
