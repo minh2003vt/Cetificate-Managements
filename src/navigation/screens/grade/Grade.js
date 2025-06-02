@@ -267,7 +267,7 @@ const Grade = ({ navigation }) => {
             </View>
           ) : (
             <FlatList
-              data={grades}
+              data={grades.filter(item => item.gradeStatus && item.gradeStatus.toLowerCase() === "pass")}
               keyExtractor={(item) => item.gradeId.toString()}
               renderItem={renderItem}
               showsVerticalScrollIndicator={false}

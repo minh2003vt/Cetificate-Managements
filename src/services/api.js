@@ -500,35 +500,38 @@ export const getUserById = async (userId, token) => {
 };
 
 // Upload user avatar
-export const updateUserAvatar = async (userId, imageUri, token) => {
-  try {
-    
-    // Create form data to send the image
-    const formData = new FormData();
-    
-    // Get file name and extension from the URI
-    const uriParts = imageUri.split('.');
-    const fileType = uriParts[uriParts.length - 1];
-    
-    // Add file to form data
-    formData.append('file', {
-      uri: imageUri,
-      name: `avatar-${userId}.${fileType}`,
-      type: `image/${fileType}`,
-    });
-    
-    // Send multipart/form-data request
-    const response = await axios.put(`${API_BASE_URL}/User/avatar`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error uploading avatar:', error.response?.data || error.message);
-    throw error.response ? error.response.data : "Network error";
+export const updateUserAvatar = async (formData, token) => {
+  const response = await fetch(`${API_BASE_URL}User/avatar`, {
+    method: 'PUT', // Đổi từ POST sang PUT
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      // KHÔNG set 'Content-Type', để fetch tự set boundary cho multipart
+    },
+    body: formData,
+  });
+  if (!response.ok) {
+    let errorMessage = 'Upload failed';
+    try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.title || errorMessage; // Kiểm tra cả errorData.title từ ASP.NET Core
+    } catch (e) {
+        // Nếu không parse được JSON, sử dụng text
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+        console.error('Upload avatar error response text:', errorText); 
+    }
+    console.error('Upload avatar error:', response.status, errorMessage);
+    throw new Error(errorMessage);
+  }
+  // Kiểm tra nếu response có nội dung JSON trước khi parse
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+      return await response.json();
+  } else {
+      // Nếu không phải JSON, có thể là string rỗng hoặc thông báo thành công dạng text
+      const successText = await response.text();
+      console.log('Upload avatar success response text:', successText); 
+      return { success: true, message: successText || 'Avatar updated successfully' }; 
   }
 };
 

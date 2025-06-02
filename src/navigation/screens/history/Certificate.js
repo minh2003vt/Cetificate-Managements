@@ -92,11 +92,11 @@ const Certificate = () => {
       
       // Kiểm tra có thể mở URL không
       const canOpen = await Linking.canOpenURL(certificateData.certificateURLwithSas);
-      
+        
       if (canOpen) {
         await Linking.openURL(certificateData.certificateURLwithSas);
         showToast("Opening certificate in browser");
-      } else {
+        } else {
         console.error("[Certificate] Cannot open URL:", certificateData.certificateURLwithSas);
         Alert.alert("Error", "Cannot open URL in browser.");
       }
@@ -116,7 +116,7 @@ const Certificate = () => {
       autoHide: true,
     });
   };
-  
+
   // Phương thức tải xuống đơn giản bằng trình duyệt
   const downloadCertificateFile = async () => {
     try {      
@@ -133,7 +133,7 @@ const Certificate = () => {
       Alert.alert("Error", "Cannot download certificate. Please try again later.");
     }
   };
-  
+
   // Xử lý hiển thị PDF trên Android an toàn hơn
   const renderPdfViewer = () => {
     if (!viewerReady || !certificateData?.certificateURLwithSas) {
@@ -144,26 +144,26 @@ const Certificate = () => {
         </View>
       );
     }
-    
+
     // Sử dụng Google PDF Viewer cho Android - cách an toàn nhất
     const pdfSource = Platform.OS === 'android'
       ? { uri: `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(certificateData.certificateURLwithSas)}` }
       : { uri: certificateData.certificateURLwithSas };
       
-    return (
-      <WebView
-        ref={webViewRef}
-        key={`pdf-viewer-${loadAttempts}`}
+      return (
+            <WebView
+              ref={webViewRef}
+              key={`pdf-viewer-${loadAttempts}`}
         source={pdfSource}
-        style={styles.certificateWebView}
-        renderLoading={() => (
-          <View style={styles.webViewLoading}>
+              style={styles.certificateWebView}
+              renderLoading={() => (
+                <View style={styles.webViewLoading}>
             <ActivityIndicator size="large" color="#1D72F3" />
-          </View>
-        )}
-        startInLoadingState={true}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
+                </View>
+              )}
+              startInLoadingState={true}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
         onError={(e) => {
           console.error("[Certificate] WebView error:", e.nativeEvent);
           setError("Cannot display certificate. Try opening in browser.");
@@ -172,14 +172,14 @@ const Certificate = () => {
         onHttpError={(e) => {
           console.error("[Certificate] HTTP error:", e.nativeEvent);
           setError(`Cannot load certificate (HTTP Error ${e.nativeEvent.statusCode})`);
-          setLoading(false);
-        }}
+                setLoading(false);
+              }}
         onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
-        originWhitelist={['*']}
-        mixedContentMode="always"
-        allowFileAccess={true}
-        allowUniversalAccessFromFileURLs={true}
+              originWhitelist={['*']}
+              mixedContentMode="always"
+              allowFileAccess={true}
+              allowUniversalAccessFromFileURLs={true}
         cacheEnabled={true}
         onShouldStartLoadWithRequest={() => true}
       />
@@ -245,7 +245,7 @@ const Certificate = () => {
                 </View>
               )}
             </View>
-            
+
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: '#1D72F3' }]}
@@ -254,7 +254,7 @@ const Certificate = () => {
                 <Ionicons name="download-outline" size={20} color="#FFF" />
                 <Text style={styles.buttonText}>Export</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: '#28a745', marginLeft: 10 }]}
                 onPress={openInBrowser}

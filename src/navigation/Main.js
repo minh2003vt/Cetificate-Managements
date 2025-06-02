@@ -333,35 +333,6 @@ const Main = () => {
       
       {showAllTabs && (
       <Tab.Screen
-        name="TrainingPlan"
-        component={TrainingPlanStack}
-        options={({ route, navigation }) => ({
-          tabBarLabel: 'Training Plan',
-          tabBarIcon: ({ focused }) => (
-            <Image
-              source={require('../../assets/Course.png')}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: '#FFFFFF'
-              }}
-            />
-          ),
-          tabBarItemStyle: {
-            flex: 1,
-            backgroundColor: navigation.isFocused() ? '#009099' : 'transparent',
-            marginHorizontal: 0,
-            borderRadius: 0,
-            paddingVertical: 8,
-            borderRightWidth: 1,
-            borderRightColor: '#2C3A4B',
-          }
-        })}
-      />
-      )}
-      
-      {showAllTabs && (
-      <Tab.Screen
         name="History"
         component={HistoryStack}
         options={({ route, navigation }) => ({

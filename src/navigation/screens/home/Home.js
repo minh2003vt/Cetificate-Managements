@@ -313,10 +313,10 @@ const Home = () => {
             {[
               { title: "Schedule", icon: "calendar", navigateTo: "Schedule" },
                { 
-                title: isInstructor ? "My Subjects" : "Notification", 
-                icon: isInstructor ? "book" : "bell", 
-                navigateTo: isInstructor ? "SubjectList" : "Notifications", 
-                badge: !isInstructor && unreadCount > 0 
+                title: "Notification", 
+                icon: "bell", 
+                navigateTo: "Notifications", 
+                badge: unreadCount > 0 
               },
               { 
                 title: isInstructor ? "Import Score" : "History", 
